@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | Azahar Mollah</title>
+
+<!-- PERFORMANCE BOOST: Preconnect to database and preload scripts -->
+<link rel="preconnect" href="https://svxszmutdbdjhrirpajr.supabase.co" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm">
+
+<style>
+:root{
+  --bg-dark: #008DD5; --bg-panel: #0B2038; --bg-soft: #061426; --bg-muted: #1A3A5C; 
+  --accent: #00E5FF; --text: #FFFFFF; --muted: #E0F7FA; --success: #00FF66; --danger: #FF3366;
+  --neon-glow: 0 0 15px rgba(0, 229, 255, 0.4), 0 0 30px rgba(0, 229, 255, 0.2);
+}
+*{ box-sizing:border-box; margin:0; padding:0; font-family:"Poppins",sans-serif; }
+body{ background: linear-gradient(135deg, #008DD5, #0B2038, #0099CC, #061426); background-size: 400% 400%; animation: bgShift 15s ease infinite; color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+@keyframes bgShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+body::before { content: ""; position: fixed; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px); background-size: 35px 35px; z-index: -2; pointer-events: none; }
+a { color:inherit; text-decoration:none; cursor:pointer; }
+
+/* Nav & Layout */
+nav{ position:sticky; top:0; z-index:20; background:rgba(11, 32, 56, 0.9); border-bottom:1px solid rgba(0, 229, 255, 0.2); backdrop-filter:blur(12px); }
+.nav-inner{ padding:15px 5vw; display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; }
+.logo{ font-weight:800; font-size: 1.2rem; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+.nav-links { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.nav-links a{ font-size:0.9rem; font-weight:700; color:var(--muted); transition:0.3s; }
+.nav-links a:hover{ color:var(--text); text-shadow:0 0 10px rgba(0,229,255,0.6); }
+
+.view-section { display: none; padding: 30px 5vw; animation: fadeIn 0.4s ease forwards; }
+.view-section.active { display: block; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+/* Buttons & Forms */
+.btn { padding: 12px 20px; border-radius: 10px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; background: linear-gradient(120deg, var(--accent), #FFFFFF, var(--accent)); background-size: 200% auto; color: #030A14; box-shadow: 0 5px 15px rgba(0,229,255,0.3); transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; width: 100%; }
+@media(min-width: 600px){ .btn { width: auto; } }
+.btn:hover:not(:disabled) { transform: translateY(-2px); background-position: 200% center; box-shadow: 0 10px 25px rgba(0,229,255,0.5); }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.btn-ghost { background: transparent; border: 2px solid var(--accent); color: var(--accent); box-shadow: none; }
+.btn-ghost:hover { background: rgba(0,229,255,0.1); color: #FFF; box-shadow: var(--neon-glow); }
+.btn-danger { background: transparent; border: 2px solid var(--danger); color: var(--danger); box-shadow: none; }
+.btn-danger:hover { background: rgba(255,51,102,0.1); color: #FFF; box-shadow: 0 0 15px rgba(255,51,102,0.4); }
+
+.form-group { margin-bottom: 20px; text-align: left; width: 100%; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+.form-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 700; color: var(--muted); }
+.form-control { width: 100%; padding: 14px; background: rgba(0,0,0,0.2); border: 2px solid rgba(0,229,255,0.2); border-radius: 10px; color: #FFF; font-size: 1rem; transition: 0.3s; font-family: inherit; outline: none; resize: vertical; }
+.form-control:focus { border-color: var(--accent); box-shadow: inset 0 0 10px rgba(0,229,255,0.2), 0 0 15px rgba(0,229,255,0.3); background: rgba(0,229,255,0.05); }
+select.form-control option { background: var(--bg-panel); color: #FFF; }
+
+/* Login Box */
+.login-box { max-width: 400px; margin: 40px auto; background: var(--bg-panel); padding: 40px 30px; border-radius: 20px; border: 2px solid var(--accent); box-shadow: var(--neon-glow); text-align: center; }
+.checkbox-wrap { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); cursor: pointer; margin-bottom: 25px; font-size: 0.95rem; user-select: none; }
+.checkbox-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+/* Dashboard Layout */
+.dashboard-grid { display: grid; grid-template-columns: 250px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; }
+.sidebar { background: var(--bg-panel); border-radius: 20px; padding: 20px; border: 1px solid rgba(0,229,255,0.2); height: fit-content; }
+.sidebar-link { display: block; padding: 15px 20px; color: var(--muted); font-weight: 700; border-radius: 12px; margin-bottom: 10px; transition: 0.3s; }
+.sidebar-link:hover, .sidebar-link.active { background: rgba(0,229,255,0.1); color: #FFF; box-shadow: inset 4px 0 0 var(--accent); }
+
+.panel-box { background: var(--bg-panel); border-radius: 20px; padding: 35px 30px; border: 1px solid rgba(0,229,255,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.panel-header { margin-bottom: 25px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;}
+.panel-header h2 { font-size: 1.6rem; margin-bottom: 5px; }
+
+/* Question Builder */
+.q-block { background: var(--bg-soft); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 16px; margin-bottom: 20px; position: relative; transition:0.3s; }
+.q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 800; color: var(--accent); }
+.opt-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.opt-row input[type="radio"] { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.opt-row input.form-control { flex: 1; }
+
+/* Analytics Cards */
+.manage-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.manage-card { background: var(--bg-soft); border: 1px solid rgba(0,229,255,0.2); border-radius: 16px; padding: 20px; transition: 0.3s; animation: fadeIn 0.4s ease; }
+.manage-card:hover { border-color: var(--accent); box-shadow: 0 5px 20px rgba(0,229,255,0.15); }
+.mc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+.mc-title { font-size: 1.2rem; font-weight: 800; color: #FFF; margin-bottom: 5px; }
+.mc-badge { background: rgba(0,229,255,0.1); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(0,229,255,0.3); }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.stat-box { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+.stat-box span { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+.stat-box strong { font-size: 1.4rem; color: #FFF; font-weight: 800; }
+.mc-actions { display: flex; gap: 10px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; }
+
+/* --- SKELETON LOADER UI (Analytics) --- */
+.skeleton-card { background: var(--bg-soft); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; height: 185px; display: flex; flex-direction: column; justify-content: space-between; }
+.skeleton-card::after { content: ""; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent); animation: skel-shimmer 1.5s infinite; }
+@keyframes skel-shimmer { 100% { left: 150%; } }
+.skel-title-box { width: 50%; height: 22px; background: rgba(255,255,255,0.1); border-radius: 6px; margin-bottom: 6px; }
+.skel-subtitle-box { width: 30%; height: 14px; background: rgba(255,255,255,0.1); border-radius: 4px; }
+.skel-stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 15px 0; }
+.skel-stat { height: 62px; background: rgba(255,255,255,0.08); border-radius: 10px; }
+.skel-actions-box { display: flex; gap: 10px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; }
+.skel-btn-box { width: 90px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+
+/* Toast & Modals */
+#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(150%); background: var(--bg-panel); border-top: 4px solid var(--accent); padding: 15px 25px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); font-weight: 700; text-align: center; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; width: 90%; max-width: 400px; }
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.error { border-top-color: var(--danger); }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal-content { background: var(--bg-panel); border: 2px solid var(--accent); border-radius: 20px; padding: 30px; max-width: 400px; width: 100%; box-shadow: var(--neon-glow); text-align: center; }
+.modal-content h3 { margin-bottom: 10px; color: var(--text); }
+.modal-actions { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
+
+/* Mobile */
+@media(max-width: 850px){ 
+  .dashboard-grid { grid-template-columns: 1fr; gap: 20px; }
+  .sidebar { display: flex; overflow-x: auto; white-space: nowrap; padding: 10px; gap: 10px; margin-bottom: 10px; }
+  .sidebar-link { margin-bottom: 0; padding: 12px 20px; border-radius: 10px; }
+  .form-row { grid-template-columns: 1fr; gap: 15px; }
+  .panel-box { padding: 25px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">🔒 Admin Portal</div>
+    <div class="nav-links">
+      <a href="tests.html">View Tests</a>
+      <a href="index.html">Main Site</a>
+      <a id="btnLogout" style="display:none; color:var(--danger);">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<!-- LOGIN VIEW -->
+<div id="view-login" class="view-section active">
+  <div class="login-box">
+    <h2 style="margin-bottom: 10px; font-size: 1.8rem;">🔐 Admin Access</h2>
+    <p style="color:var(--muted); margin-bottom: 30px; font-size: 0.9rem;">Enter the database-secured admin password.</p>
+    <div class="form-group"><input type="password" id="adminPassword" class="form-control" placeholder="Enter Admin Password"></div>
+    <label class="checkbox-wrap"><input type="checkbox" id="rememberMe"> Keep me logged in</label>
+    <button class="btn" id="btnLogin" style="width:100%;">Unlock Dashboard</button>
+  </div>
+</div>
+
+<!-- DASHBOARD VIEW -->
+<div id="view-dashboard" class="view-section">
+  <div class="dashboard-grid">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <a class="sidebar-link active" onclick="switchTab('tab-manage')">📊 Manage Analytics</a>
+      <a class="sidebar-link" onclick="switchTab('tab-create')">➕ Test Builder</a>
+      <a class="sidebar-link" onclick="switchTab('tab-settings')">⚙️ Admin Settings</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <div>
+
+      <!-- TAB 0: MANAGE & ANALYTICS -->
+      <div id="tab-manage" class="panel-box">
+        <div class="panel-header">
+          <div>
+            <h2>Manage Tests</h2>
+            <p style="color:var(--muted); font-size:0.9rem;">View analytics, edit, or delete published mock tests.</p>
+          </div>
+          <button class="btn" onclick="switchTab('tab-create')" style="font-size: 0.8rem; padding: 8px 15px;">+ Create New</button>
+        </div>
+        
+        <div id="manageGrid" class="manage-grid">
+          <!-- Skeletons (replaced by JS on load) -->
+          <div class="skeleton-card"><div class="skel-header"><div class="skel-title-box"></div><div class="skel-subtitle-box"></div></div><div class="skel-stats-container"><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div></div><div class="skel-actions-box"><div class="skel-btn-box"></div><div class="skel-btn-box"></div></div></div>
+        </div>
+      </div>
+
+      <!-- TAB 1: CREATE / EDIT TEST -->
+      <div id="tab-create" class="panel-box" style="display:none;">
+        <div class="panel-header">
+          <div>
+            <h2 id="builderTitle">Create a Mock Test</h2>
+            <p style="color:var(--muted); font-size:0.9rem;">Fill in the details and add multiple choice questions.</p>
+          </div>
+          <button class="btn btn-danger" id="btnCancelEdit" style="display:none; font-size: 0.8rem; padding: 8px 15px;">Cancel Edit</button>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group"><label>Test Title</label><input type="text" id="testTitle" class="form-control" placeholder="e.g. Thermodynamics Quiz"></div>
+          <div class="form-group"><label>Subject</label><select id="testSubject" class="form-control"><option value="Physics">Physics</option><option value="Chemistry">Chemistry</option><option value="Biology">Biology</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Target Class</label><select id="testClass" class="form-control"><option value="Class IX">Class IX</option><option value="Class X">Class X</option><option value="Class XI">Class XI</option><option value="Class XII">Class XII</option></select></div>
+          <div class="form-group"><label>Duration (Minutes)</label><input type="number" id="testDuration" class="form-control" value="15" min="1"></div>
+        </div>
+
+        <h3 style="margin: 30px 0 15px; color:var(--accent); font-size: 1.2rem;">Questions</h3>
+        <div id="questionsContainer"></div>
+        <button class="btn btn-ghost" id="btnAddQuestion" style="margin-bottom: 30px; width:100%; font-size: 0.95rem;">+ Add Another Question</button>
+        <hr style="border:0; border-top:1px dashed rgba(255,255,255,0.2); margin-bottom: 25px;">
+        <button class="btn" id="btnPublishTest" style="width:100%; font-size:1.1rem; padding: 16px;">🚀 Publish Test to Database</button>
+      </div>
+
+      <!-- TAB 2: SETTINGS -->
+      <div id="tab-settings" class="panel-box" style="display:none;">
+        <div class="panel-header">
+          <h2>Admin Settings</h2>
+          <p style="color:var(--muted); font-size:0.9rem;">Update your global database admin password.</p>
+        </div>
+        <div class="form-group"><label>Current Password</label><input type="password" id="currentPassword" class="form-control"></div>
+        <div class="form-group"><label>New Password</label><input type="password" id="newPassword" class="form-control"></div>
+        <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPassword" class="form-control"></div>
+        <button class="btn" id="btnUpdatePassword">🔐 Update Password</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Reusable Confirmation Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMsg" style="color: var(--muted); margin-bottom: 20px; font-size:0.9rem;">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('confirmModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-danger" id="modalBtnConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">Message</div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+  const supabaseUrl = 'https://svxszmutdbdjhrirpajr.supabase.co'; 
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eHN6bXV0ZGJkamhyaXJwYWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDAzMjcsImV4cCI6MjA4OTIxNjMyN30.0onmcNCCREB1T-xktpGPGj8Ei1iDnjCRoc4RoJ8yOTs';
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // App State
+  let editingTestId = null;
+  let allDatabaseTests = [];
+
+  function showToast(msg, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg; toast.className = isError ? 'error show' : 'show';
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  function showConfirmModal(title, msg, btnText, callback) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMsg').textContent = msg;
+    const btn = document.getElementById('modalBtnConfirm');
+    btn.textContent = btnText;
+    btn.onclick = () => { callback(); document.getElementById('confirmModal').classList.remove('show'); };
+    document.getElementById('confirmModal').classList.add('show');
+  }
+
+  window.switchTab = function(tabId) {
+    document.getElementById('tab-manage').style.display = 'none';
+    document.getElementById('tab-create').style.display = 'none';
+    document.getElementById('tab-settings').style.display = 'none';
+    document.getElementById(tabId).style.display = 'block';
+    
+    document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+    event.target.classList.add('active');
+
+    if(tabId === 'tab-manage') loadManageAnalytics();
+  }
+
+  // --- AUTH LOGIC ---
+  function checkLoginStatus() {
+    const isLoggedIn = localStorage.getItem('adminLoggedIn') || sessionStorage.getItem('adminLoggedIn');
+    if (isLoggedIn === 'true') {
+      document.getElementById('view-login').classList.remove('active');
+      document.getElementById('view-dashboard').classList.add('active');
+      document.getElementById('btnLogout').style.display = 'block';
+      loadManageAnalytics(); // Load data on login
+    } else {
+      document.getElementById('view-dashboard').classList.remove('active');
+      document.getElementById('view-login').classList.add('active');
+      document.getElementById('btnLogout').style.display = 'none';
+    }
+  }
+
+  document.getElementById('btnLogin').addEventListener('click', async () => {
+    const password = document.getElementById('adminPassword').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
+    const btn = document.getElementById('btnLogin');
+    
+    if(!password) return showToast("Enter the admin password", true);
+    btn.textContent = "Verifying..."; btn.disabled = true;
+
+    const { data: isCorrect, error } = await supabase.rpc('login_admin', { pass_guess: password });
+    btn.textContent = "Unlock Dashboard"; btn.disabled = false;
+
+    if(isCorrect) {
+      if(rememberMe) localStorage.setItem('adminLoggedIn', 'true');
+      else sessionStorage.setItem('adminLoggedIn', 'true');
+      showToast("Login Successful!"); checkLoginStatus();
+    } else showToast("Incorrect password.", true);
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', () => {
+    showConfirmModal("Secure Logout", "Are you sure you want to end your admin session?", "Yes, Logout", () => {
+      localStorage.removeItem('adminLoggedIn'); sessionStorage.removeItem('adminLoggedIn');
+      checkLoginStatus(); showToast("Logged out successfully.");
+    });
+  });
+
+  // --- MANAGE & ANALYTICS LOGIC ---
+  async function loadManageAnalytics() {
+    const grid = document.getElementById('manageGrid');
+    
+    // Inject Skeletons while loading
+    grid.innerHTML = `
+      <div class="skeleton-card"><div class="skel-header"><div class="skel-title-box"></div><div class="skel-subtitle-box"></div></div><div class="skel-stats-container"><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div></div><div class="skel-actions-box"><div class="skel-btn-box"></div><div class="skel-btn-box"></div></div></div>
+      <div class="skeleton-card"><div class="skel-header"><div class="skel-title-box"></div><div class="skel-subtitle-box"></div></div><div class="skel-stats-container"><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div></div><div class="skel-actions-box"><div class="skel-btn-box"></div><div class="skel-btn-box"></div></div></div>
+      <div class="skeleton-card"><div class="skel-header"><div class="skel-title-box"></div><div class="skel-subtitle-box"></div></div><div class="skel-stats-container"><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div></div><div class="skel-actions-box"><div class="skel-btn-box"></div><div class="skel-btn-box"></div></div></div>
+    `;
+
+    // Fetch Tests
+    const { data: tests, error: err1 } = await supabase.from('mock_tests').select('*').order('id', { ascending: false });
+    // Fetch Results/Analytics
+    const { data: results, error: err2 } = await supabase.from('test_results').select('test_id, percentage');
+
+    if(err1) return grid.innerHTML = `<p style="color: var(--danger); text-align: center;">Database Error: ${err1.message}</p>`;
+
+    allDatabaseTests = tests || [];
+    if(allDatabaseTests.length === 0) return grid.innerHTML = '<p style="color: var(--muted); text-align: center;">No tests created yet.</p>';
+
+    // Process Analytics
+    const statsMap = {};
+    if(results) {
+        results.forEach(r => {
+            if(!statsMap[r.test_id]) statsMap[r.test_id] = [];
+            statsMap[r.test_id].push(r.percentage);
+        });
+    }
+
+    grid.innerHTML = '';
+    allDatabaseTests.forEach(test => {
+      const stats = statsMap[test.id] || [];
+      const attendees = stats.length;
+      const avg = attendees > 0 ? (stats.reduce((a,b)=>a+b,0) / attendees).toFixed(1) + '%' : '--';
+      const high = attendees > 0 ? Math.max(...stats).toFixed(1) + '%' : '--';
+      const low = attendees > 0 ? Math.min(...stats).toFixed(1) + '%' : '--';
+
+      const card = document.createElement('div');
+      card.className = 'manage-card';
+      card.id = `manage-card-${test.id}`; // Assigned ID for instant removal
+      
+      card.innerHTML = `
+        <div class="mc-header">
+          <div><h3 class="mc-title">${test.title}</h3><div style="font-size:0.85rem; color:var(--muted)">${test.subject} • ${test.class_level}</div></div>
+          <span class="mc-badge">ID: ${test.id}</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box"><span>👥 Attendees</span><strong>${attendees}</strong></div>
+          <div class="stat-box"><span>📊 Average</span><strong>${avg}</strong></div>
+          <div class="stat-box"><span>📈 Highest</span><strong style="color:var(--success)">${high}</strong></div>
+          <div class="stat-box"><span>📉 Lowest</span><strong style="color:var(--danger)">${low}</strong></div>
+        </div>
+        <div class="mc-actions">
+          <button class="btn btn-ghost" style="padding: 8px 15px; font-size: 0.8rem;" onclick="triggerEdit(${test.id})">✏️ Edit Test</button>
+          <button class="btn btn-danger" style="padding: 8px 15px; font-size: 0.8rem;" onclick="triggerDelete(${test.id}, '${test.title}')">🗑️ Delete</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // --- DELETE TEST (Optimized for instant UI removal) ---
+  window.triggerDelete = function(id, title) {
+    showConfirmModal("Delete Test", `Are you sure you want to permanently delete "${title}"? All analytics for this test will also be wiped.`, "Delete Permanently", async () => {
+      
+      // 1. Optimistic UI: Fade the card to show action is happening
+      const cardEl = document.getElementById(`manage-card-${id}`);
+      if(cardEl) {
+         cardEl.style.opacity = '0.5';
+         cardEl.style.pointerEvents = 'none';
+      }
+
+      // 2. Perform DB deletion
+      const { error } = await supabase.from('mock_tests').delete().eq('id', id);
+      
+      // 3. Handle Result
+      if(error) {
+        showToast(error.message, true);
+        if(cardEl) { // Revert UI if it failed
+           cardEl.style.opacity = '1';
+           cardEl.style.pointerEvents = 'auto';
+        }
+      } else { 
+        showToast("Test Deleted Successfully"); 
+        
+        // Remove instantly without fetching database again
+        if(cardEl) cardEl.remove();
+        
+        // Remove from the local memory array
+        allDatabaseTests = allDatabaseTests.filter(t => t.id !== id);
+
+        // If no tests are left on the screen, show empty state text
+        if(allDatabaseTests.length === 0) {
+           document.getElementById('manageGrid').innerHTML = '<p style="color: var(--muted); text-align: center;">No tests created yet.</p>';
+        }
+      }
+    });
+  }
+
+  // --- EDIT TEST LOGIC ---
+  window.triggerEdit = function(id) {
+    const test = allDatabaseTests.find(t => t.id === id);
+    if(!test) return;
+
+    editingTestId = test.id;
+    document.getElementById('builderTitle').textContent = "✏️ Editing Test: " + test.title;
+    document.getElementById('btnPublishTest').textContent = "💾 Update Database";
+    document.getElementById('btnPublishTest').style.background = "linear-gradient(120deg, var(--success), #FFF, var(--success))";
+    document.getElementById('btnCancelEdit').style.display = 'block';
+
+    // Populate Fields
+    document.getElementById('testTitle').value = test.title;
+    document.getElementById('testSubject').value = test.subject;
+    document.getElementById('testClass').value = test.class_level;
+    document.getElementById('testDuration').value = test.duration_mins;
+
+    // Populate Questions
+    qContainer.innerHTML = ''; qCount = 0;
+    test.questions.forEach(qData => addQuestionBlock(qData));
+
+    // Switch View visually using the tab button (to get the active highlight)
+    document.querySelectorAll('.sidebar-link')[1].click(); 
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  document.getElementById('btnCancelEdit').addEventListener('click', () => {
+    editingTestId = null;
+    document.getElementById('builderTitle').textContent = "Create a Mock Test";
+    document.getElementById('btnPublishTest').textContent = "🚀 Publish Test to Database";
+    document.getElementById('btnPublishTest').style.background = "";
+    document.getElementById('btnCancelEdit').style.display = 'none';
+    
+    document.getElementById('testTitle').value = '';
+    document.getElementById('testDuration').value = '15';
+    qContainer.innerHTML = ''; qCount = 0; addQuestionBlock();
+    showToast("Edit Cancelled. Switched to New Test Mode.");
+  });
+
+  // --- QUESTION BUILDER (Modified for Pre-filling) ---
+  const qContainer = document.getElementById('questionsContainer');
+  let qCount = 0;
+
+  function addQuestionBlock(qData = null) {
+    qCount++; const id = qCount;
+    const div = document.createElement('div'); div.className = 'q-block'; div.id = `qblock_${id}`;
+    
+    const qText = qData ? qData.question : '';
+    const o0 = qData ? qData.options[0] : ''; const o1 = qData ? qData.options[1] : '';
+    const o2 = qData ? qData.options[2] : ''; const o3 = qData ? qData.options[3] : '';
+    const cIdx = qData ? qData.correctIndex : 0;
+
+    div.innerHTML = `
+      <div class="q-header"><span>Question ${id}</span><button class="btn btn-danger" style="padding: 6px 12px; font-size:0.75rem; width: auto;" onclick="document.getElementById('qblock_${id}').remove(); updateQuestionNumbers();">✕ Remove</button></div>
+      <div class="form-group"><textarea class="form-control q-text" rows="2" placeholder="Enter question text...">${qText}</textarea></div>
+      <div class="opt-row"><input type="radio" name="correct_${id}" value="0" ${cIdx===0?'checked':''}> <input type="text" class="form-control q-opt" value="${o0}" placeholder="Option A"></div>
+      <div class="opt-row"><input type="radio" name="correct_${id}" value="1" ${cIdx===1?'checked':''}> <input type="text" class="form-control q-opt" value="${o1}" placeholder="Option B"></div>
+      <div class="opt-row"><input type="radio" name="correct_${id}" value="2" ${cIdx===2?'checked':''}> <input type="text" class="form-control q-opt" value="${o2}" placeholder="Option C"></div>
+      <div class="opt-row"><input type="radio" name="correct_${id}" value="3" ${cIdx===3?'checked':''}> <input type="text" class="form-control q-opt" value="${o3}" placeholder="Option D"></div>
+    `;
+    qContainer.appendChild(div);
+  }
+
+  window.updateQuestionNumbers = function() {
+    document.querySelectorAll('.q-block').forEach((block, index) => {
+      block.querySelector('.q-header span').textContent = `Question ${index + 1}`;
+    });
+  }
+  document.getElementById('btnAddQuestion').addEventListener('click', () => addQuestionBlock());
+
+  // --- SUBMIT / UPDATE TEST LOGIC ---
+  document.getElementById('btnPublishTest').addEventListener('click', async () => {
+    const title = document.getElementById('testTitle').value.trim();
+    const subject = document.getElementById('testSubject').value;
+    const classLevel = document.getElementById('testClass').value;
+    const duration = parseInt(document.getElementById('testDuration').value);
+    const blocks = document.querySelectorAll('.q-block');
+
+    if(!title || blocks.length === 0) return showToast("Title and at least 1 question required", true);
+
+    const questionsArray = [];
+    let isValid = true;
+
+    blocks.forEach((block) => {
+      const qText = block.querySelector('.q-text').value.trim();
+      const options = Array.from(block.querySelectorAll('.q-opt')).map(inp => inp.value.trim());
+      const radioChecked = block.querySelector('input[type="radio"]:checked');
+      if(!qText || options.some(opt => opt === "")) isValid = false;
+      questionsArray.push({ question: qText, options: options, correctIndex: parseInt(radioChecked.value) });
+    });
+
+    if(!isValid) return showToast("All fields must be filled", true);
+
+    const testData = { title, subject, class_level: classLevel, duration_mins: duration, questions: questionsArray };
+    const btn = document.getElementById('btnPublishTest');
+    btn.textContent = "Saving..."; btn.disabled = true;
+
+    let dbError = null;
+
+    if(editingTestId) {
+       // UPDATE MODE
+       const { error } = await supabase.from('mock_tests').update(testData).eq('id', editingTestId);
+       dbError = error;
+    } else {
+       // INSERT MODE
+       const { error } = await supabase.from('mock_tests').insert([testData]);
+       dbError = error;
+    }
+
+    btn.disabled = false;
+
+    if (dbError) {
+      showToast("Error: " + dbError.message, true);
+      btn.textContent = editingTestId ? "💾 Update Database" : "🚀 Publish Test to Database";
+    } else {
+      showToast(editingTestId ? "✓ Test Updated Successfully!" : "✓ Test Published Successfully!");
+      document.getElementById('btnCancelEdit').click(); // This resets the form automatically
+      loadManageAnalytics(); // Refresh analytics grid in background
+    }
+  });
+
+  // Settings tab placeholder to avoid JS errors
+  document.getElementById('btnUpdatePassword').addEventListener('click', async () => {
+    const currentPass = document.getElementById('currentPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const { data: success } = await supabase.rpc('change_admin_password', { old_pass: currentPass, new_pass: newPass });
+    if(success) showToast("Password updated!"); else showToast("Incorrect password.", true);
+  });
+
+  // Init
+  checkLoginStatus();
+  if(!editingTestId) addQuestionBlock();
+</script>
+</body>
+</html>

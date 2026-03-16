@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Mock Tests | Azahar Mollah</title>
+
+<!-- PERFORMANCE BOOST: Preconnect to database and preload scripts -->
+<link rel="preconnect" href="https://svxszmutdbdjhrirpajr.supabase.co" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm">
+
+<style>
+:root{
+  --bg-dark: #008DD5; --bg-panel: #0B2038; --bg-soft: #061426; --bg-muted: #1A3A5C; 
+  --accent: #00E5FF; --text: #FFFFFF; --muted: #E0F7FA; --success: #00FF66; --danger: #FF3366;
+  --neon-glow: 0 0 15px rgba(0, 229, 255, 0.4), 0 0 30px rgba(0, 229, 255, 0.2);
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{
+  font-family:"Poppins","Segoe UI",system-ui,-apple-system,sans-serif;
+  background: linear-gradient(135deg, #008DD5, #0B2038, #0099CC, #061426);
+  background-size: 400% 400%; animation: bgShift 15s ease infinite;
+  color: var(--text); line-height: 1.6; font-weight: 600; 
+  min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden;
+}
+@keyframes bgShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+body::before {
+  content: ""; position: fixed; inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 35px 35px; z-index: -2; pointer-events: none;
+}
+a { color:inherit; text-decoration:none; }
+
+/* Navigation */
+nav{ position:sticky; top:0; z-index:20; background:rgba(11, 32, 56, 0.9); border-bottom:1px solid rgba(0, 229, 255, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); backdrop-filter:blur(12px); }
+.nav-inner{ padding:16px 7vw; display:flex; align-items:center; justify-content:space-between; }
+.logo{ font-weight:800; font-size: 1.2rem; color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 255, 255, 0.4); }
+.nav-links a{ font-size:0.9rem; font-weight: 700; color:var(--muted); margin-left: 24px; transition: color 0.3s; cursor:pointer;}
+.nav-links a:hover{ color:var(--text); text-shadow: 0 0 10px rgba(0, 229, 255, 0.6); }
+
+/* Floating Background Molecules */
+.floating-molecules{ position:fixed; inset:0; pointer-events:none; z-index:-1; }
+.floating-molecules span{
+  position:absolute; width:10px; height:10px; border-radius:50%; background:rgba(0, 229, 255, 0.5); 
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.9); animation:floatUp var(--duration) linear infinite; filter:blur(0.5px);
+}
+@keyframes floatUp{ 0%{transform:translateY(0) scale(0.8);opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{transform:translateY(-120vh) scale(0.8);opacity:0;} }
+
+/* Layout Elements & Base Animations */
+main { flex: 1; padding: 0 7vw 100px; max-width: 1400px; margin: 0 auto; width: 100%; position:relative; }
+.view-section { display: none; padding-top:40px; }
+.view-section.active { display: block; animation: viewFadeIn 0.5s ease forwards; }
+@keyframes viewFadeIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* --- VIEW 1: TEST SELECTION --- */
+.page-header { text-align: center; margin-bottom: 40px; animation: slideDown 0.6s ease forwards; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+
+.tag {
+  display:inline-flex; padding:6px 16px; border-radius:999px; border:2px solid rgba(0, 229, 255, 0.4); 
+  color:var(--accent); font-weight: 700; font-size:0.8rem; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px;
+  box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.2); position:relative; overflow:hidden;
+}
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; margin-bottom: 10px; }
+.subtitle { color: var(--muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+.filter-bar { display: flex; gap: 15px; justify-content: center; margin-bottom: 50px; flex-wrap: wrap; animation: viewFadeIn 0.8s ease forwards; }
+.filter-bar select {
+  background: var(--bg-soft); border: 1px solid rgba(0, 229, 255, 0.3); color: #FFFFFF; padding: 12px 20px;
+  border-radius: 12px; font-family: inherit; font-weight: 700; font-size: 1rem; outline: none; cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.filter-bar select:hover, .filter-bar select:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 229, 255, 0.3); transform: translateY(-2px); }
+
+.test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+.test-card {
+  background: linear-gradient(145deg, var(--bg-panel), var(--bg-soft)); border: 2px solid rgba(0, 229, 255, 0.15);
+  border-radius: 20px; padding: 30px; position: relative; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex; flex-direction: column; opacity: 0; animation: cardEntrance 0.6s ease forwards;
+}
+@keyframes cardEntrance { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.test-card:hover { transform: translateY(-10px) scale(1.02); border-color: var(--accent); box-shadow: var(--neon-glow), 0 15px 40px rgba(0,0,0,0.5); z-index: 10; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.class-badge { background: rgba(0, 229, 255, 0.1); color: var(--accent); padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; border: 1px solid rgba(0, 229, 255, 0.3); }
+.subject-icon { font-size: 1.8rem; filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.6)); transition: transform 0.4s; }
+.test-card:hover .subject-icon { transform: rotate(15deg) scale(1.2); }
+.test-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; color: #FFFFFF; }
+.test-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 25px; display: flex; gap: 15px; }
+
+/* Buttons */
+.btn {
+  margin-top: auto; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 1rem; border: none;
+  cursor: pointer; text-align: center; text-transform: uppercase; letter-spacing: 1px;
+  background: linear-gradient(120deg, var(--accent), #FFFFFF, var(--accent)); background-size: 200% auto;
+  color: #030A14; box-shadow: 0 10px 25px rgba(0, 229, 255, 0.4); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.btn:hover { transform: scale(1.05) translateY(-2px); background-position: 200% center; box-shadow: 0 15px 35px rgba(0, 229, 255, 0.6); }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-ghost { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
+.btn-ghost:hover { background: rgba(0,229,255,0.1); color: #FFF; box-shadow: var(--neon-glow); }
+.btn-danger { background: var(--danger); color: #FFF; box-shadow: 0 10px 25px rgba(255, 51, 102, 0.4); }
+.btn-danger:hover { background: #FF1A4D; box-shadow: 0 15px 35px rgba(255, 51, 102, 0.6); background-image:none;}
+
+/* --- SKELETON LOADER UI --- */
+.skeleton-wrapper { display: contents; }
+.skeleton {
+  background: var(--bg-soft); border: 2px solid rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 30px;
+  display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden; height: 260px;
+}
+.skeleton::after {
+  content: ""; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: skel-shimmer 1.5s infinite;
+}
+@keyframes skel-shimmer { 100% { left: 150%; } }
+.skel-header { display: flex; justify-content: space-between; }
+.skel-badge { width: 70px; height: 25px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+.skel-icon { width: 30px; height: 30px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+.skel-title { width: 80%; height: 28px; background: rgba(255,255,255,0.1); border-radius: 6px; margin-top: 10px; }
+.skel-meta { width: 60%; height: 16px; background: rgba(255,255,255,0.1); border-radius: 6px; }
+.skel-btn { width: 100%; height: 45px; background: rgba(255,255,255,0.1); border-radius: 12px; margin-top: auto; }
+
+/* Loading State Text */
+.status-message { grid-column: 1 / -1; text-align: center; padding: 50px; font-size: 1.2rem; color: var(--accent); }
+
+/* --- VIEW 2: ACTIVE QUIZ --- */
+.quiz-header {
+  background: var(--bg-panel); border: 2px solid rgba(0,229,255,0.3); border-radius: 16px; padding: 20px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.quiz-title h2 { font-size: 1.3rem; margin-bottom: 4px; }
+.quiz-progress { font-size: 0.9rem; color: var(--accent); font-weight: 700; transition: all 0.3s; }
+.quiz-timer { background: rgba(0,229,255,0.1); border: 1px solid var(--accent); padding: 8px 16px; border-radius: 10px; font-size: 1.2rem; font-weight: 800; color: #FFF; text-shadow: 0 0 10px var(--accent); transition: color 0.3s; }
+
+.question-anim-wrapper { animation: slideX 0.4s ease forwards; }
+@keyframes slideX { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+.question-box { background: var(--bg-soft); border-radius: 20px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
+.question-text { font-size: 1.4rem; font-weight: 700; margin-bottom: 30px; line-height: 1.5; }
+
+.options-grid { display: flex; flex-direction: column; gap: 15px; }
+.option-label {
+  display: flex; align-items: center; padding: 18px 24px; background: rgba(11, 32, 56, 0.6);
+  border: 2px solid rgba(0,229,255,0.1); border-radius: 12px; cursor: pointer; transition: all 0.3s; font-size: 1.05rem; font-weight: 600;
+}
+.option-label:hover { border-color: rgba(0,229,255,0.5); background: rgba(0,229,255,0.05); transform: translateX(10px); }
+.option-label .opt-letter { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-right: 16px; font-weight: 800; color: var(--accent); transition: all 0.3s; }
+input[type="radio"] { display: none; }
+input[type="radio"]:checked + .option-label { border-color: var(--accent); background: rgba(0,229,255,0.15); box-shadow: inset 0 0 15px rgba(0,229,255,0.2); color: #FFF; animation: popSelect 0.4s ease forwards; transform: translateX(10px); }
+input[type="radio"]:checked + .option-label .opt-letter { background: var(--accent); color: #030A14; box-shadow: 0 0 10px var(--accent); transform: scale(1.1); }
+@keyframes popSelect { 0% { transform: scale(1) translateX(0); } 50% { transform: scale(1.02) translateX(10px); } 100% { transform: scale(1) translateX(10px); } }
+
+.quiz-footer { display: flex; justify-content: space-between; align-items: center; }
+
+/* --- VIEW 3: RESULTS --- */
+.result-box { background: var(--bg-panel); border-radius: 24px; padding: 50px 30px; text-align: center; border: 2px solid var(--accent); box-shadow: var(--neon-glow); max-width: 600px; margin: 0 auto; }
+.score-circle {
+  width: 160px; height: 160px; border-radius: 50%; margin: 0 auto 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 8px solid var(--accent); background: var(--bg-soft); box-shadow: 0 0 30px rgba(0,229,255,0.3), inset 0 0 20px rgba(0,229,255,0.2);
+  animation: pulseGlow 2s infinite, popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transform: scale(0);
+}
+@keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 30px rgba(0,229,255,0.3), inset 0 0 20px rgba(0,229,255,0.2); } 50% { box-shadow: 0 0 50px rgba(0,229,255,0.6), inset 0 0 30px rgba(0,229,255,0.4); } }
+@keyframes popIn { 0% { transform: scale(0.5) rotate(-15deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+.score-circle h2 { font-size: 3.5rem; margin: 0; line-height: 1; color: #FFF; text-shadow: 0 0 15px rgba(255,255,255,0.5); }
+.score-circle span { font-size: 0.9rem; color: var(--accent); font-weight: 800; text-transform: uppercase; margin-top:5px; }
+.result-message { font-size: 1.5rem; margin-bottom: 20px; font-weight: 800; animation: slideUpFade 0.8s 0.3s forwards; opacity: 0; }
+
+.review-answers { text-align: left; margin-top: 30px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 30px; }
+.review-item { background: var(--bg-soft); padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--danger); opacity: 0; animation: slideUpFade 0.5s forwards; }
+.review-item.correct { border-left-color: var(--success); }
+@keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.review-q { font-weight: 700; margin-bottom: 10px; font-size: 1.05rem; }
+.review-ans { font-size: 0.95rem; color: var(--muted); }
+.review-ans span { font-weight: 800; }
+.ans-correct { color: var(--success); }
+.ans-wrong { color: var(--danger); }
+
+/* --- CUSTOM MODAL --- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
+  display: none; justify-content: center; align-items: center; z-index: 1000; opacity: 0; transition: opacity 0.3s;
+}
+.modal-overlay.show { display: flex; opacity: 1; animation: fadeIn 0.3s forwards; }
+.modal-content {
+  background: var(--bg-panel); border: 2px solid var(--accent); border-radius: 20px; padding: 40px;
+  max-width: 450px; width: 90%; text-align: center; box-shadow: var(--neon-glow); transform: scale(0.9); animation: popModal 0.3s forwards;
+}
+@keyframes popModal { to { transform: scale(1); } }
+.modal-content h3 { font-size: 1.5rem; margin-bottom: 15px; color: var(--text); }
+.modal-content p { color: var(--muted); margin-bottom: 30px; font-size: 1rem; }
+.modal-actions { display: flex; gap: 15px; justify-content: center; }
+
+/* --- PRINT / PDF STYLES --- */
+#printArea { display: none; }
+@media print {
+  body * { visibility: hidden; }
+  #printArea, #printArea * { visibility: visible; }
+  #printArea { display: block; position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; padding: 20px; font-family: sans-serif; }
+  body { background: #fff !important; }
+  .floating-molecules, nav, main, .modal-overlay { display: none !important; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+  th { background-color: #f4f4f4; font-weight: bold; }
+  .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+  .correct-text { color: #008000; font-weight: bold; }
+  .wrong-text { color: #d00000; font-weight: bold; }
+}
+</style>
+</head>
+<body>
+
+<div class="floating-molecules" id="molecules"></div>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo"><a href src="mock.html">Azahar Mollah</div>
+    <div class="nav-links">
+      <a id="navHomeBtn">← Exit Test Portal</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <!-- VIEW 1: TEST DIRECTORY -->
+  <div id="view-directory" class="view-section active">
+    <header class="page-header">
+      <div class="tag">Assessment Hub</div>
+      <h1>Interactive Mock Tests</h1>
+      <p class="subtitle">Select your class and subject below to start your live exam-oriented practice session.</p>
+    </header>
+    <div class="filter-bar">
+      <select id="classFilter"><option value="All">All Classes</option><option value="Class IX">Class IX</option><option value="Class X">Class X</option><option value="Class XI">Class XI</option><option value="Class XII">Class XII</option></select>
+      <select id="subjectFilter"><option value="All">All Subjects</option><option value="Biology">Biology</option><option value="Physics">Physics</option><option value="Chemistry">Chemistry</option></select>
+    </div>
+    
+    <div class="test-grid" id="testGrid">
+      <!-- High Performance Skeleton Loading UI -->
+      <div class="skeleton-wrapper">
+        <div class="skeleton"><div class="skel-header"><div class="skel-badge"></div><div class="skel-icon"></div></div><div class="skel-title"></div><div class="skel-meta"></div><div class="skel-btn"></div></div>
+        <div class="skeleton"><div class="skel-header"><div class="skel-badge"></div><div class="skel-icon"></div></div><div class="skel-title"></div><div class="skel-meta"></div><div class="skel-btn"></div></div>
+        <div class="skeleton"><div class="skel-header"><div class="skel-badge"></div><div class="skel-icon"></div></div><div class="skel-title"></div><div class="skel-meta"></div><div class="skel-btn"></div></div>
+        <div class="skeleton"><div class="skel-header"><div class="skel-badge"></div><div class="skel-icon"></div></div><div class="skel-title"></div><div class="skel-meta"></div><div class="skel-btn"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 2: ACTIVE QUIZ -->
+  <div id="view-quiz" class="view-section">
+    <div class="quiz-header">
+      <div class="quiz-title"><h2 id="activeTestTitle">Test Title</h2><div class="quiz-progress" id="quizProgress">Question 1 of 10</div></div>
+      <div class="quiz-timer" id="quizTimer">00:00</div>
+    </div>
+    <div class="question-box" id="questionAnimWrapper">
+      <div class="question-text" id="questionText">Loading question...</div>
+      <div class="options-grid" id="optionsGrid"></div>
+    </div>
+    <div class="quiz-footer">
+      <button class="btn btn-ghost" id="btnPrev">← Previous</button>
+      <button class="btn" id="btnNext">Next Question →</button>
+      <button class="btn" id="btnSubmit" style="display:none;">Submit Test</button>
+    </div>
+  </div>
+
+  <!-- VIEW 3: RESULTS -->
+  <div id="view-result" class="view-section">
+    <div class="result-box">
+      <div class="tag" style="margin-bottom:20px;">Test Complete</div>
+      <div class="score-circle">
+        <h2 id="scoreDisplay">0</h2>
+        <span id="scoreTotal">OUT OF 10</span>
+      </div>
+      <div class="result-message" id="resultMessage">Great effort!</div>
+
+      <!-- NEW UI: STATS ROW FOR ACCURACY AND PERCENTILE -->
+      <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; opacity:0; animation: slideUpFade 0.8s 0.4s forwards; flex-wrap: wrap;">
+        <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); padding: 8px 20px; border-radius: 999px; font-size: 0.95rem; font-weight: 700;">
+          🎯 Accuracy: <span id="statAccuracy" style="color: var(--accent); font-weight: 800; margin-left: 5px;">0%</span>
+        </div>
+        <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); padding: 8px 20px; border-radius: 999px; font-size: 0.95rem; font-weight: 700;">
+          📈 Percentile: <span id="statPercentile" style="color: var(--accent); font-weight: 800; margin-left: 5px;">Calculating...</span>
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px; opacity:0; animation: slideUpFade 0.8s 0.6s forwards;">
+        <button class="btn btn-ghost" id="btnReturnDir">Take Another Test</button>
+        <button class="btn" id="btnDownloadPdf">💾 Download Results (PDF)</button>
+      </div>
+
+      <div class="review-answers" id="reviewArea"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Custom Modal UI -->
+<div class="modal-overlay" id="customModal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMsg">Are you sure you want to proceed?</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modalBtnCancel">Cancel</button>
+      <button class="btn btn-danger" id="modalBtnConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden area structured purely for PDF Printing -->
+<div id="printArea"></div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+  const supabaseUrl = 'https://svxszmutdbdjhrirpajr.supabase.co'; 
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eHN6bXV0ZGJkamhyaXJwYWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDAzMjcsImV4cCI6MjA4OTIxNjMyN30.0onmcNCCREB1T-xktpGPGj8Ei1iDnjCRoc4RoJ8yOTs';
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // App State
+  let allTests = [];
+  let currentTest = null;
+  let currentQuestionIndex = 0;
+  let userAnswers = [];
+  let timerInterval = null;
+  let timeRemaining = 0;
+
+  // Custom Modal Logic
+  let confirmCallback = null;
+  function showModal(title, msg, onConfirm, isDanger = false) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMsg').textContent = msg;
+    const btnConf = document.getElementById('modalBtnConfirm');
+    
+    if(isDanger) {
+        btnConf.className = 'btn btn-danger';
+        btnConf.textContent = 'Yes, Exit';
+    } else {
+        btnConf.className = 'btn';
+        btnConf.textContent = 'Yes, Submit';
+    }
+
+    confirmCallback = onConfirm;
+    document.getElementById('customModal').classList.add('show');
+  }
+
+  function hideModal() {
+    document.getElementById('customModal').classList.remove('show');
+    confirmCallback = null;
+  }
+
+  document.getElementById('modalBtnCancel').addEventListener('click', hideModal);
+  document.getElementById('modalBtnConfirm').addEventListener('click', () => {
+    if(confirmCallback) confirmCallback();
+    hideModal();
+  });
+
+  // Background Molecules
+  const molecules = document.getElementById('molecules');
+  for(let i=0; i<20; i++){
+    const bubble = document.createElement('span');
+    bubble.style.left = Math.random()*100 + '%';
+    bubble.style.bottom = '-20vh';
+    bubble.style.width = bubble.style.height = (5 + Math.random()*15) + 'px';
+    bubble.style.setProperty('--duration', (5 + Math.random()*8) + 's');
+    bubble.style.animationDelay = Math.random()*5 + 's';
+    molecules.appendChild(bubble);
+  }
+
+  // --- NEW: FETCH LOGIC WITH INSTANT CACHING ---
+  async function fetchMockTests() {
+    // 1. Immediately load tests from local memory if we have them
+    const cacheKey = 'mockTestsCache';
+    const cachedData = localStorage.getItem(cacheKey);
+    
+    if (cachedData) {
+      allTests = JSON.parse(cachedData);
+      renderTests(allTests);
+    }
+
+    try {
+      // 2. Fetch fresh data from Supabase in the background
+      const { data, error } = await supabase.from('mock_tests').select('*').order('id', { ascending: false });
+      if (error) throw error;
+      
+      // 3. Only update memory & re-render if the database changed
+      if (!cachedData || JSON.stringify(data) !== cachedData) {
+        allTests = data;
+        localStorage.setItem(cacheKey, JSON.stringify(allTests));
+        renderTests(allTests);
+      }
+    } catch (error) {
+      if (!cachedData) { // Fallback if no cache exists and database fails
+        allTests = [
+          { id: 1, title: 'Cell Structure & Physiology', subject: 'Biology', class_level: 'Class XI', duration_mins: 2, questions: [{ question: "Which organelle is the powerhouse?", options: ["Nucleus", "Mitochondria", "Ribosome", "Golgi"], correctIndex: 1 }, { question: "Role of diaphragm?", options: ["Filter dust", "Exchange gases", "Change thoracic volume", "Pump blood"], correctIndex: 2 }] },
+          { id: 2, title: 'Laws of Motion Basics', subject: 'Physics', class_level: 'Class IX', duration_mins: 3, questions: [{ question: "Newton's First Law is also:", options: ["Momentum", "Inertia", "Gravity", "Energy"], correctIndex: 1 }, { question: "SI unit of Force?", options: ["Joule", "Watt", "Newton", "Pascal"], correctIndex: 2 }] },
+        ];
+        renderTests(allTests);
+      }
+    }
+  }
+
+  function getIcon(subject) {
+    if(subject.toLowerCase().includes('bio')) return '🧬';
+    if(subject.toLowerCase().includes('phy')) return '⚛️';
+    if(subject.toLowerCase().includes('chem')) return '🧪';
+    return '📝';
+  }
+
+  function renderTests(testsToRender) {
+    const testGrid = document.getElementById('testGrid');
+    testGrid.innerHTML = '';
+    
+    if (testsToRender.length === 0) {
+      return testGrid.innerHTML = `<div class="status-message">No tests found for this category.</div>`;
+    }
+    
+    testsToRender.forEach((test, index) => {
+      const card = document.createElement('div');
+      card.className = 'test-card';
+      card.style.animationDelay = `${index * 0.1}s`;
+      card.innerHTML = `
+        <div class="card-header"><span class="class-badge">${test.class_level}</span><span class="subject-icon">${getIcon(test.subject)}</span></div>
+        <h3 class="test-title">${test.title}</h3>
+        <div class="test-meta"><span>🏷️ ${test.subject}</span><span>⏱️ ${test.duration_mins} Mins</span><span>❓ ${test.questions ? test.questions.length : 0} Qs</span></div>
+      `;
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      if(!test.questions || test.questions.length === 0) { btn.disabled = true; btn.textContent = 'Questions Pending'; }
+      else { btn.textContent = 'Start Test'; btn.addEventListener('click', () => startTest(test)); }
+      card.appendChild(btn);
+      testGrid.appendChild(card);
+    });
+  }
+
+  document.getElementById('classFilter').addEventListener('change', filterTests);
+  document.getElementById('subjectFilter').addEventListener('change', filterTests);
+  function filterTests() {
+    const sClass = document.getElementById('classFilter').value;
+    const sSub = document.getElementById('subjectFilter').value;
+    renderTests(allTests.filter(t => (sClass === 'All' || t.class_level === sClass) && (sSub === 'All' || t.subject === sSub)));
+  }
+
+  function switchView(viewId) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function startTest(test) {
+    currentTest = test;
+    currentQuestionIndex = 0;
+    userAnswers = new Array(test.questions.length).fill(null);
+    timeRemaining = test.duration_mins * 60;
+    document.getElementById('activeTestTitle').textContent = test.title;
+    switchView('view-quiz');
+    loadQuestion();
+    
+    clearInterval(timerInterval);
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+      timeRemaining--;
+      updateTimerDisplay();
+      if(timeRemaining <= 0) { clearInterval(timerInterval); submitTest(); }
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+    const s = (timeRemaining % 60).toString().padStart(2, '0');
+    const qTimer = document.getElementById('quizTimer');
+    qTimer.textContent = `${m}:${s}`;
+    if(timeRemaining < 60) { qTimer.style.color = 'var(--danger)'; qTimer.style.borderColor = 'var(--danger)'; qTimer.style.boxShadow = '0 0 10px rgba(255, 51, 102, 0.4)'; }
+    else { qTimer.style.color = '#FFF'; qTimer.style.borderColor = 'var(--accent)'; qTimer.style.boxShadow = 'none'; }
+  }
+
+  function loadQuestion() {
+    const qAnimWrapper = document.getElementById('questionAnimWrapper');
+    qAnimWrapper.classList.remove('question-anim-wrapper');
+    void qAnimWrapper.offsetWidth; 
+    qAnimWrapper.classList.add('question-anim-wrapper');
+    
+    const q = currentTest.questions[currentQuestionIndex];
+    document.getElementById('quizProgress').textContent = `Question ${currentQuestionIndex + 1} of ${currentTest.questions.length}`;
+    document.getElementById('questionText').textContent = q.question;
+    
+    const optsGrid = document.getElementById('optionsGrid');
+    optsGrid.innerHTML = '';
+    const letters = ['A','B','C','D','E'];
+    
+    q.options.forEach((optText, index) => {
+      const radioId = `q_${currentQuestionIndex}_opt_${index}`;
+      const radio = document.createElement('input');
+      radio.type = 'radio'; radio.name = 'quizOption'; radio.id = radioId; radio.value = index;
+      if(userAnswers[currentQuestionIndex] === index) radio.checked = true;
+      radio.addEventListener('change', (e) => userAnswers[currentQuestionIndex] = parseInt(e.target.value));
+
+      const label = document.createElement('label');
+      label.className = 'option-label'; label.htmlFor = radioId;
+      label.innerHTML = `<span class="opt-letter">${letters[index]}</span> ${optText}`;
+      optsGrid.appendChild(radio); optsGrid.appendChild(label);
+    });
+
+    document.getElementById('btnPrev').style.visibility = currentQuestionIndex === 0 ? 'hidden' : 'visible';
+    if (currentQuestionIndex === currentTest.questions.length - 1) {
+      document.getElementById('btnNext').style.display = 'none';
+      document.getElementById('btnSubmit').style.display = 'inline-block';
+    } else {
+      document.getElementById('btnNext').style.display = 'inline-block';
+      document.getElementById('btnSubmit').style.display = 'none';
+    }
+  }
+
+  document.getElementById('btnNext').addEventListener('click', () => { if(currentQuestionIndex < currentTest.questions.length - 1) { currentQuestionIndex++; loadQuestion(); } });
+  document.getElementById('btnPrev').addEventListener('click', () => { if(currentQuestionIndex > 0) { currentQuestionIndex--; loadQuestion(); } });
+
+  // Custom Modal Trigger for Submit
+  document.getElementById('btnSubmit').addEventListener('click', () => {
+    showModal("Submit Test", "Are you sure you have completed the test and want to submit?", () => {
+      clearInterval(timerInterval);
+      submitTest();
+    }, false);
+  });
+
+  function submitTest() {
+    let finalScore = 0;
+    const reviewHTML = [];
+    const letters = ['A','B','C','D','E']; // Used for answer prefix
+    
+    // Prepare Printable PDF Table HTML
+    const dateStr = new Date().toLocaleDateString();
+    let printHtml = `
+      <div class="print-header">
+        <h1>Azahar Mollah Science</h1>
+        <h2>Mock Test Official Report</h2>
+        <p><strong>Subject:</strong> ${currentTest.subject} | <strong>Class:</strong> ${currentTest.class_level}</p>
+        <p><strong>Test Name:</strong> ${currentTest.title} | <strong>Date:</strong> ${dateStr}</p>
+      </div>
+      <table>
+        <tr>
+          <th>Q. No</th>
+          <th>Question</th>
+          <th>Your Answer</th>
+          <th>Correct Answer</th>
+          <th>Status</th>
+        </tr>
+    `;
+
+    currentTest.questions.forEach((q, index) => {
+      const uAns = userAnswers[index];
+      const isCorrect = uAns === q.correctIndex;
+      if(isCorrect) finalScore++;
+
+      // Adding corresponding letter (A, B, C, D) to text output
+      const uAnsText = uAns !== null ? `${letters[uAns]}) ${q.options[uAns]}` : "Not Attempted";
+      const cAnsText = `${letters[q.correctIndex]}) ${q.options[q.correctIndex]}`;
+
+      // Web View Review Item
+      reviewHTML.push(`
+        <div class="review-item ${isCorrect ? 'correct' : ''}" style="animation-delay: ${0.8 + (index * 0.15)}s">
+          <div class="review-q">${index + 1}. ${q.question}</div>
+          <div class="review-ans">
+            Your Answer: <span class="${isCorrect ? 'ans-correct' : 'ans-wrong'}">${uAnsText}</span><br>
+            ${!isCorrect ? `Correct Answer: <span class="ans-correct">${cAnsText}</span>` : ''}
+          </div>
+        </div>
+      `);
+
+      // PDF View Table Row
+      printHtml += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${q.question}</td>
+          <td class="${isCorrect ? 'correct-text' : 'wrong-text'}">${uAnsText}</td>
+          <td>${cAnsText}</td>
+          <td class="${isCorrect ? 'correct-text' : 'wrong-text'}">${isCorrect ? 'Correct' : 'Incorrect'}</td>
+        </tr>
+      `;
+    });
+
+    const percentage = (finalScore / currentTest.questions.length) * 100;
+    
+    // Finish Print HTML
+    printHtml += `</table>
+    <div style="margin-top:30px; padding:20px; background:#f4f4f4; border:1px solid #ddd; text-align:center;">
+      <h2 style="margin:0;">Final Score: ${finalScore} out of ${currentTest.questions.length}</h2>
+      <h3 style="margin-top:10px; color:${percentage>=50?'#008000':'#d00000'};">Percentage: ${percentage.toFixed(1)}%</h3>
+    </div>`;
+    document.getElementById('printArea').innerHTML = printHtml;
+
+    // Display Web View Scores
+    document.getElementById('scoreTotal').textContent = `OUT OF ${currentTest.questions.length}`;
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    scoreDisplay.textContent = '0';
+    let currentAnimScore = 0;
+    if (finalScore > 0) {
+        const scoreInterval = setInterval(() => {
+            currentAnimScore++; scoreDisplay.textContent = currentAnimScore;
+            scoreDisplay.style.transform = 'scale(1.2)';
+            setTimeout(() => scoreDisplay.style.transform = 'scale(1)', 100);
+            if (currentAnimScore >= finalScore) clearInterval(scoreInterval);
+        }, 150);
+    }
+    
+    const msgEl = document.getElementById('resultMessage');
+    if(percentage >= 80) { msgEl.innerHTML = "Excellent Performance! 🏆<br><span style='font-size:0.9rem;color:var(--success);font-weight:400'>You mastered this topic.</span>"; msgEl.style.color = "var(--success)"; document.querySelector('.score-circle').style.borderColor = "var(--success)"; }
+    else if(percentage >= 50) { msgEl.innerHTML = "Good job! 👍<br><span style='font-size:0.9rem;color:var(--accent);font-weight:400'>Keep practicing to reach perfection.</span>"; msgEl.style.color = "#FFF"; document.querySelector('.score-circle').style.borderColor = "var(--accent)"; }
+    else { msgEl.innerHTML = "Needs improvement. 📚<br><span style='font-size:0.9rem;color:var(--danger);font-weight:400'>Review the answers below carefully.</span>"; msgEl.style.color = "var(--danger)"; document.querySelector('.score-circle').style.borderColor = "var(--danger)"; }
+
+    document.getElementById('reviewArea').innerHTML = `<h3 style="margin-bottom:20px; animation: slideUpFade 0.5s 0.8s forwards; opacity:0;">Review Answers</h3>` + reviewHTML.join('');
+
+    // --- NEW: UPDATE STATS UI (Accuracy & Percentile) ---
+    document.getElementById('statAccuracy').textContent = `${percentage.toFixed(1)}%`;
+    document.getElementById('statPercentile').innerHTML = `<span style="font-size:0.8rem; font-weight:400; color:#FFF;">Calculating...</span>`;
+
+    // --- NEW: FETCH PERCENTILE AND PUSH RESULT TO SUPABASE ANALYTICS ---
+    (async () => {
+      try {
+        // 1. Fetch previous test takers to calculate rank instantly
+        const { data: history } = await supabase.from('test_results').select('percentage').eq('test_id', currentTest.id);
+        
+        let totalTakers = history ? history.length + 1 : 1;
+        let belowOrEqual = history ? history.filter(d => d.percentage <= percentage).length + 1 : 1;
+        
+        // Percentile formula
+        let pct = Math.round((belowOrEqual / totalTakers) * 100);
+        
+        let suffix = "th";
+        if (pct % 10 === 1 && pct !== 11) suffix = "st";
+        else if (pct % 10 === 2 && pct !== 12) suffix = "nd";
+        else if (pct % 10 === 3 && pct !== 13) suffix = "rd";
+
+        document.getElementById('statPercentile').innerHTML = `${pct}<sup>${suffix}</sup>`;
+
+        // 2. Secretly save this user's result
+        await supabase.from('test_results').insert([{
+            test_id: currentTest.id,
+            score: finalScore,
+            total_questions: currentTest.questions.length,
+            percentage: percentage
+        }]);
+
+      } catch (err) {
+        console.error("Analytics Error:", err);
+        document.getElementById('statPercentile').innerText = "N/A";
+      }
+    })();
+
+    switchView('view-result');
+  }
+
+  // Print to PDF function
+  document.getElementById('btnDownloadPdf').addEventListener('click', () => {
+    window.print();
+  });
+
+  document.getElementById('btnReturnDir').addEventListener('click', () => { 
+    // Show Skeleton again while fetching fresh data
+    document.getElementById('testGrid').innerHTML = `
+      <div class="skeleton-wrapper">
+        <div class="skeleton"><div class="skel-header"><div class="skel-badge"></div><div class="skel-icon"></div></div><div class="skel-title"></div><div class="skel-meta"></div><div class="skel-btn"></div></div>
+        <div class="skeleton"><div class="skel-header"><div class="skel-badge"></div><div class="skel-icon"></div></div><div class="skel-title"></div><div class="skel-meta"></div><div class="skel-btn"></div></div>
+      </div>
+    `;
+    fetchMockTests(); 
+    switchView('view-directory'); 
+  });
+  
+  // Custom Modal Trigger for Exit
+  document.getElementById('navHomeBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    if(document.getElementById('view-quiz').classList.contains('active')) {
+      showModal("Exit Test Portal", "Warning: Leaving now will discard your current test progress. Do you want to leave?", () => {
+         clearInterval(timerInterval);
+         window.location.href = 'index.html'; 
+      }, true);
+    } else {
+      window.location.href = 'index.html'; 
+    }
+  });
+
+  // Fetch initial tests when page loads
+  fetchMockTests();
+</script>
+</body>
+</html>

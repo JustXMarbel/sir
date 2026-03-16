@@ -1227,7 +1227,68 @@ footer{
     transform:rotate(-4deg);
   }
 }
-
+/* --- MOCK TEST SECTION --- */
+.mock-test-section {
+  background: linear-gradient(180deg, #0B2038, #061426);
+}
+.mock-cta-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.mock-card {
+  background: linear-gradient(145deg, var(--bg-panel), var(--bg-soft));
+  border: 2px solid var(--accent);
+  border-radius: 24px;
+  padding: 50px 40px;
+  text-align: center;
+  max-width: 650px;
+  width: 100%;
+  box-shadow: var(--neon-glow), 0 20px 50px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.4s ease;
+}
+.mock-card:hover {
+  transform: translateY(-8px);
+}
+.mock-card::before {
+  content: "";
+  position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(0,229,255,0.1) 0%, transparent 60%);
+  animation: pulseBackground 6s infinite alternate;
+  pointer-events: none;
+}
+.mock-icon {
+  font-size: 4.5rem;
+  margin-bottom: 20px;
+  display: inline-block;
+  filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.6));
+}
+.mock-card h3 {
+  font-size: 2.2rem;
+  margin-bottom: 15px;
+  color: #FFFFFF;
+  position: relative;
+}
+.mock-card p {
+  color: var(--muted);
+  font-size: 1.1rem;
+  margin-bottom: 35px;
+  position: relative;
+}
+.test-btn {
+  display: inline-block;
+  font-size: 1.15rem;
+  padding: 16px 40px;
+  position: relative;
+  z-index: 1;
+}
+@media(max-width:520px){
+  .mock-card { padding: 40px 20px; }
+  .mock-card h3 { font-size: 1.8rem; }
+}
 /* --- MOBILE SPECIFIC FIXES --- */
 @media(max-width:520px){
   section{
@@ -1334,6 +1395,7 @@ footer{
     <div class="logo">Azahar Mollah</div>
     <div class="nav-links" id="navLinks">
       <a href="#hero">Home</a>
+	      <a href="#mock-test">Mock Tests</a>
       <a href="#subjects">Subjects</a>
       <a href="#why-us">Why Us</a>
       <a href="#smartboard">Session</a>
@@ -1362,7 +1424,7 @@ Also offering special NEET-oriented Biology classes for Classes XI-Xll to ensure
       </div>
       <div class="hero-cta">
         <a class="btn primary" href="#contact">Start Enrollment</a>
-        <a class="btn ghost" href="#smartboard">See Smart Board Flow</a>
+        <a class="btn ghost" href="mock.html">Take Mock Test</a>
       </div>
       <div class="hero-info">
         <span>📍 <a class="contact-link" href="https://surl.li/gsviyz" target="_blank">Rampurhat · Chaldhoani</a></span>
@@ -1461,7 +1523,23 @@ Also offering special NEET-oriented Biology classes for Classes XI-Xll to ensure
 </section>
 
 <!-- WHY JOIN US SECTION -->
-
+<!-- MOCK TEST SECTION -->
+<section class="mock-test-section" id="mock-test">
+  <div class="section-head reveal">
+    <div class="tag">Interactive Practice</div>
+    <h2>Test Yourself 🚀</h2>
+    <p>Assess your preparation level with our real-time mock tests. Get instant scores, detailed reviews, and percentile ranks!</p>
+  </div>
+  
+  <div class="mock-cta-container reveal">
+    <div class="mock-card">
+      <div class="mock-icon">⏱️</div>
+      <h3>Take a Free Mock Test</h3>
+      <p>Choose your class and subject to start a timed practice test designed to simulate real exam conditions and boost your confidence.</p>
+      <a href="mock.html" class="btn primary test-btn">Start Mock Test Now →</a>
+    </div>
+  </div>
+</section>
 
 <section class="method" id="method">
   <div class="section-head reveal">

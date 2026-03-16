@@ -1,0 +1,18 @@
+# Ignore a specific file
+.env
+
+# Ignore a file type everywhere
+*.log
+
+# Ignore a folder
+node_modules/
+
+# Ignore a folder only in root
+/dist
+
+# Ignore everything in a folder but keep the folder
+uploads/*
+!uploads/.gitkeep
+
+# Exceptions (don't ignore this)
+!important.log
