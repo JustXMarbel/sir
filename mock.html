@@ -34,7 +34,7 @@ a { color:inherit; text-decoration:none; }
 /* Navigation */
 nav{ position:sticky; top:0; z-index:20; background:rgba(11, 32, 56, 0.9); border-bottom:1px solid rgba(0, 229, 255, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); backdrop-filter:blur(12px); }
 .nav-inner{ padding:16px 7vw; display:flex; align-items:center; justify-content:space-between; }
-.logo{ font-weight:800; font-size: 1.2rem; color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 255, 255, 0.4); }
+.logo a{ font-weight:800; font-size: 1.2rem; color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 255, 255, 0.4); }
 .nav-links a{ font-size:0.9rem; font-weight: 700; color:var(--muted); margin-left: 24px; transition: color 0.3s; cursor:pointer;}
 .nav-links a:hover{ color:var(--text); text-shadow: 0 0 10px rgba(0, 229, 255, 0.6); }
 
@@ -128,27 +128,60 @@ h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; margin-bottom: 10px; }
   background: var(--bg-panel); border: 2px solid rgba(0,229,255,0.3); border-radius: 16px; padding: 20px;
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
-.quiz-title h2 { font-size: 1.3rem; margin-bottom: 4px; }
+.quiz-title h2 { font-size: 1.3rem; margin-bottom: 4px; word-break: break-word; }
 .quiz-progress { font-size: 0.9rem; color: var(--accent); font-weight: 700; transition: all 0.3s; }
-.quiz-timer { background: rgba(0,229,255,0.1); border: 1px solid var(--accent); padding: 8px 16px; border-radius: 10px; font-size: 1.2rem; font-weight: 800; color: #FFF; text-shadow: 0 0 10px var(--accent); transition: color 0.3s; }
+.quiz-timer { background: rgba(0,229,255,0.1); border: 1px solid var(--accent); padding: 8px 16px; border-radius: 10px; font-size: 1.2rem; font-weight: 800; color: #FFF; text-shadow: 0 0 10px var(--accent); transition: color 0.3s; flex-shrink: 0; }
 
 .question-anim-wrapper { animation: slideX 0.4s ease forwards; }
 @keyframes slideX { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 
-.question-box { background: var(--bg-soft); border-radius: 20px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
-.question-text { font-size: 1.4rem; font-weight: 700; margin-bottom: 30px; line-height: 1.5; }
-
-.options-grid { display: flex; flex-direction: column; gap: 15px; }
-.option-label {
-  display: flex; align-items: center; padding: 18px 24px; background: rgba(11, 32, 56, 0.6);
-  border: 2px solid rgba(0,229,255,0.1); border-radius: 12px; cursor: pointer; transition: all 0.3s; font-size: 1.05rem; font-weight: 600;
+/* FIXED QUESTION & OPTION WRAPPING */
+.question-box { 
+  background: var(--bg-soft); border-radius: 20px; padding: 40px; 
+  border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; 
+  width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden;
 }
-.option-label:hover { border-color: rgba(0,229,255,0.5); background: rgba(0,229,255,0.05); transform: translateX(10px); }
-.option-label .opt-letter { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-right: 16px; font-weight: 800; color: var(--accent); transition: all 0.3s; }
+.question-text { 
+  font-size: 1.3rem; font-weight: 700; margin-bottom: 30px; line-height: 1.5; 
+  word-break: break-word; overflow-wrap: anywhere; 
+}
+
+.options-grid { 
+  display: flex; flex-direction: column; gap: 15px; 
+  width: 100%; max-width: 100%; 
+}
+.option-label {
+  display: flex; align-items: flex-start; padding: 18px 20px; 
+  background: rgba(11, 32, 56, 0.6); border: 2px solid rgba(0,229,255,0.1); 
+  border-radius: 12px; cursor: pointer; transition: all 0.3s; 
+  font-size: 1rem; font-weight: 600;
+  width: 100%; box-sizing: border-box; max-width: 100%;
+}
+.option-label:hover { border-color: rgba(0,229,255,0.5); background: rgba(0,229,255,0.05); transform: translateX(5px); }
+
+.option-label .opt-letter { 
+  display: inline-flex; justify-content: center; align-items: center; 
+  width: 32px; min-width: 32px; height: 32px; /* Prevent shrinking */
+  background: rgba(255,255,255,0.1); border-radius: 8px; 
+  margin-right: 15px; font-weight: 800; color: var(--accent); 
+  transition: all 0.3s; flex-shrink: 0; margin-top: 2px;
+}
+.option-label .opt-text {
+  flex: 1 1 auto; 
+  min-width: 0; /* CRITICAL for flex wrapping */
+  word-break: break-all; overflow-wrap: anywhere; /* Forces giant text to break */
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
 input[type="radio"] { display: none; }
-input[type="radio"]:checked + .option-label { border-color: var(--accent); background: rgba(0,229,255,0.15); box-shadow: inset 0 0 15px rgba(0,229,255,0.2); color: #FFF; animation: popSelect 0.4s ease forwards; transform: translateX(10px); }
+input[type="radio"]:checked + .option-label { 
+  border-color: var(--accent); background: rgba(0,229,255,0.15); 
+  box-shadow: inset 0 0 15px rgba(0,229,255,0.2); color: #FFF; 
+  animation: popSelect 0.4s ease forwards; transform: translateX(5px); 
+}
 input[type="radio"]:checked + .option-label .opt-letter { background: var(--accent); color: #030A14; box-shadow: 0 0 10px var(--accent); transform: scale(1.1); }
-@keyframes popSelect { 0% { transform: scale(1) translateX(0); } 50% { transform: scale(1.02) translateX(10px); } 100% { transform: scale(1) translateX(10px); } }
+@keyframes popSelect { 0% { transform: scale(1) translateX(0); } 50% { transform: scale(1.02) translateX(5px); } 100% { transform: scale(1) translateX(5px); } }
 
 .quiz-footer { display: flex; justify-content: space-between; align-items: center; }
 
@@ -166,7 +199,7 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
 .result-message { font-size: 1.5rem; margin-bottom: 20px; font-weight: 800; animation: slideUpFade 0.8s 0.3s forwards; opacity: 0; }
 
 .review-answers { text-align: left; margin-top: 30px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 30px; }
-.review-item { background: var(--bg-soft); padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--danger); opacity: 0; animation: slideUpFade 0.5s forwards; }
+.review-item { background: var(--bg-soft); padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--danger); opacity: 0; animation: slideUpFade 0.5s forwards; word-break: break-word; overflow-wrap: anywhere; }
 .review-item.correct { border-left-color: var(--success); }
 @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .review-q { font-weight: 700; margin-bottom: 10px; font-size: 1.05rem; }
@@ -198,12 +231,33 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
   #printArea { display: block; position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; padding: 20px; font-family: sans-serif; }
   body { background: #fff !important; }
   .floating-molecules, nav, main, .modal-overlay { display: none !important; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+  
+  /* FIXED PDF TABLE */
+  table { 
+    width: 100%; max-width: 100%; border-collapse: collapse; margin-top: 20px; 
+    table-layout: fixed; /* Forces table not to stretch past page width */
+  }
+  th, td { 
+    border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top;
+    word-break: break-word; overflow-wrap: anywhere; /* Forces long unbroken strings to wrap */
+  }
   th { background-color: #f4f4f4; font-weight: bold; }
+  th:nth-child(1), td:nth-child(1) { width: 8%; } /* Q.No */
+  th:nth-child(2), td:nth-child(2) { width: 35%; } /* Question */
+  th:nth-child(3), td:nth-child(3) { width: 25%; } /* Your Ans */
+  th:nth-child(4), td:nth-child(4) { width: 25%; } /* Correct Ans */
+  th:nth-child(5), td:nth-child(5) { width: 7%; }  /* Status */
+  
   .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px; }
   .correct-text { color: #008000; font-weight: bold; }
   .wrong-text { color: #d00000; font-weight: bold; }
+}
+
+@media (max-width: 600px) {
+  .question-box { padding: 25px 20px; }
+  .quiz-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .option-label:hover { transform: none; }
+  input[type="radio"]:checked + .option-label { transform: none; }
 }
 </style>
 </head>
@@ -213,7 +267,7 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
 
 <nav>
   <div class="nav-inner">
-    <div class="logo"><a href src="mock.html">Azahar Mollah</div>
+    <div class="logo"><a href="index.html">Azahar Mollah</a></div>
     <div class="nav-links">
       <a id="navHomeBtn">← Exit Test Portal</a>
     </div>
@@ -493,7 +547,13 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
 
       const label = document.createElement('label');
       label.className = 'option-label'; label.htmlFor = radioId;
-      label.innerHTML = `<span class="opt-letter">${letters[index]}</span> ${optText}`;
+      
+      // FIXED: Separated letter and text into spans so flexbox text wraps perfectly
+      label.innerHTML = `
+        <span class="opt-letter">${letters[index]}</span>
+        <span class="opt-text">${optText}</span>
+      `;
+      
       optsGrid.appendChild(radio); optsGrid.appendChild(label);
     });
 
