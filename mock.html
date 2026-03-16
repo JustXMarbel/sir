@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://svxszmutdbdjhrirpajr.supabase.co" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm">
 
-<!-- PDF GENERATOR LIBRARY -->
+<!-- PDF GENERATOR LIBRARY (For reliable direct mobile downloads) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -256,7 +256,18 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       <p class="subtitle">Select your class and subject below to start your live exam-oriented practice session.</p>
     </header>
     <div class="filter-bar">
-      <select id="classFilter"><option value="All">All Classes</option><option value="Class IX">Class IX</option><option value="Class X">Class X</option><option value="Class XI">Class XI</option><option value="Class XII">Class XII</option></select>
+      <!-- EXPANDED CLASS FILTER -->
+      <select id="classFilter">
+        <option value="All">All Classes</option>
+        <option value="Class VI">Class VI</option>
+        <option value="Class VII">Class VII</option>
+        <option value="Class VIII">Class VIII</option>
+        <option value="Class IX">Class IX</option>
+        <option value="Class X">Class X</option>
+        <option value="Class XI">Class XI</option>
+        <option value="Class XII">Class XII</option>
+        <option value="NEET Preparation">NEET Preparation</option>
+      </select>
       <select id="subjectFilter"><option value="All">All Subjects</option><option value="Biology">Biology</option><option value="Physics">Physics</option><option value="Chemistry">Chemistry</option></select>
     </div>
     
@@ -298,7 +309,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       </div>
       <div class="result-message" id="resultMessage">Great effort!</div>
 
-      <!-- NEW UI: STATS ROW FOR ACCURACY AND PERCENTILE -->
       <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; opacity:0; animation: slideUpFade 0.8s 0.4s forwards; flex-wrap: wrap;">
         <div style="background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); padding: 8px 20px; border-radius: 999px; font-size: 0.95rem; font-weight: 700;">
           🎯 Accuracy: <span id="statAccuracy" style="color: var(--accent); font-weight: 800; margin-left: 5px;">0%</span>
@@ -549,24 +559,24 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     
     const dateStr = new Date().toLocaleDateString();
     
-    // --- PERFECTLY FORMATTED HTML FOR HTML2PDF ---
+    // --- BUILD THE HTML2PDF TEMPLATE WITH THE EXACT SAME NATIVE STYLING ---
     window.latestPrintHtml = `
-      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; padding: 30px; background: #fff;">
-        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #008DD5; padding-bottom: 20px;">
-          <h1 style="color: #008DD5; margin: 0 0 10px 0; font-size: 28px;">Azahar Mollah Science</h1>
-          <h2 style="margin: 0 0 10px 0; color: #444; font-size: 20px;">Mock Test Official Report</h2>
-          <p style="margin: 5px 0; font-size: 14px;"><strong>Subject:</strong> ${currentTest.subject} &nbsp;|&nbsp; <strong>Class:</strong> ${currentTest.class_level}</p>
-          <p style="margin: 5px 0; font-size: 14px;"><strong>Test Name:</strong> ${currentTest.title} &nbsp;|&nbsp; <strong>Date:</strong> ${dateStr}</p>
+      <div style="font-family: sans-serif; color: black; padding: 20px; background: white;">
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+          <h1 style="margin: 0 0 10px 0;">Azahar Mollah Science</h1>
+          <h2 style="margin: 0 0 10px 0;">Mock Test Official Report</h2>
+          <p style="margin: 5px 0;"><strong>Subject:</strong> ${currentTest.subject} &nbsp;|&nbsp; <strong>Class:</strong> ${currentTest.class_level}</p>
+          <p style="margin: 5px 0;"><strong>Test Name:</strong> ${currentTest.title} &nbsp;|&nbsp; <strong>Date:</strong> ${dateStr}</p>
         </div>
         
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+        <table style="width: 100%; max-width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; font-size: 14px;">
           <thead>
-            <tr style="background-color: #f0f4f8; color: #333;">
-              <th style="border: 1px solid #ccc; padding: 10px; width: 8%; text-align: center;">Q.No</th>
-              <th style="border: 1px solid #ccc; padding: 10px; width: 40%; text-align: left;">Question</th>
-              <th style="border: 1px solid #ccc; padding: 10px; width: 22%; text-align: left;">Your Answer</th>
-              <th style="border: 1px solid #ccc; padding: 10px; width: 22%; text-align: left;">Correct Answer</th>
-              <th style="border: 1px solid #ccc; padding: 10px; width: 8%; text-align: center;">Status</th>
+            <tr>
+              <th style="border: 1px solid #ddd; padding: 12px; text-align: left; background-color: #f4f4f4; font-weight: bold; width: 8%;">Q.No</th>
+              <th style="border: 1px solid #ddd; padding: 12px; text-align: left; background-color: #f4f4f4; font-weight: bold; width: 35%;">Question</th>
+              <th style="border: 1px solid #ddd; padding: 12px; text-align: left; background-color: #f4f4f4; font-weight: bold; width: 25%;">Your Answer</th>
+              <th style="border: 1px solid #ddd; padding: 12px; text-align: left; background-color: #f4f4f4; font-weight: bold; width: 25%;">Correct Answer</th>
+              <th style="border: 1px solid #ddd; padding: 12px; text-align: left; background-color: #f4f4f4; font-weight: bold; width: 7%;">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -580,7 +590,7 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       const uAnsText = uAns !== null ? `${letters[uAns]}) ${q.options[uAns]}` : "Not Attempted";
       const cAnsText = `${letters[q.correctIndex]}) ${q.options[q.correctIndex]}`;
 
-      // Web View Review Item
+      // Web View Review Item (UI display)
       reviewHTML.push(`
         <div class="review-item ${isCorrect ? 'correct' : ''}" style="animation-delay: ${0.8 + (index * 0.15)}s">
           <div class="review-q">${index + 1}. ${q.question}</div>
@@ -591,14 +601,14 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
         </div>
       `);
 
-      // PDF View Table Row
+      // Add Table Row to the PDF HTML String
       window.latestPrintHtml += `
             <tr>
-              <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${index + 1}</td>
-              <td style="border: 1px solid #ccc; padding: 10px; word-wrap: break-word; overflow-wrap: anywhere;">${q.question}</td>
-              <td style="border: 1px solid #ccc; padding: 10px; word-wrap: break-word; overflow-wrap: anywhere; color: ${isCorrect ? '#008000' : '#d00000'}; font-weight: bold;">${uAnsText}</td>
-              <td style="border: 1px solid #ccc; padding: 10px; word-wrap: break-word; overflow-wrap: anywhere;">${cAnsText}</td>
-              <td style="border: 1px solid #ccc; padding: 10px; text-align: center; color: ${isCorrect ? '#008000' : '#d00000'}; font-weight: bold;">${isCorrect ? '✓' : '✗'}</td>
+              <td style="border: 1px solid #ddd; padding: 12px; text-align: left; word-break: break-word; overflow-wrap: anywhere;">${index + 1}</td>
+              <td style="border: 1px solid #ddd; padding: 12px; text-align: left; word-break: break-word; overflow-wrap: anywhere;">${q.question}</td>
+              <td style="border: 1px solid #ddd; padding: 12px; text-align: left; word-break: break-word; overflow-wrap: anywhere; color: ${isCorrect ? '#008000' : '#d00000'}; font-weight: bold;">${uAnsText}</td>
+              <td style="border: 1px solid #ddd; padding: 12px; text-align: left; word-break: break-word; overflow-wrap: anywhere;">${cAnsText}</td>
+              <td style="border: 1px solid #ddd; padding: 12px; text-align: left; word-break: break-word; overflow-wrap: anywhere; color: ${isCorrect ? '#008000' : '#d00000'}; font-weight: bold;">${isCorrect ? 'Correct' : 'Incorrect'}</td>
             </tr>
       `;
     });
@@ -609,9 +619,9 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
           </tbody>
         </table>
         
-        <div style="margin-top: 30px; padding: 20px; background: #f0f8ff; border: 1px solid #b3d4fc; text-align: center; border-radius: 12px;">
-          <h2 style="margin: 0; color: #003366; font-size: 24px;">Final Score: ${finalScore} out of ${currentTest.questions.length}</h2>
-          <h3 style="margin: 10px 0 0 0; color: ${percentage >= 50 ? '#008000' : '#d00000'}; font-size: 18px;">Accuracy: ${percentage.toFixed(1)}%</h3>
+        <div style="margin-top: 30px; padding: 20px; background: #f4f4f4; border: 1px solid #ddd; text-align: center;">
+          <h2 style="margin: 0; color: black;">Final Score: ${finalScore} out of ${currentTest.questions.length}</h2>
+          <h3 style="margin-top: 10px; color: ${percentage >= 50 ? '#008000' : '#d00000'};">Percentage: ${percentage.toFixed(1)}%</h3>
         </div>
       </div>
     `;
@@ -674,17 +684,18 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     switchView('view-result');
   }
 
-  // --- NEW ROBUST PDF DOWNLOAD LOGIC ---
+  // --- TRIGGER HTML2PDF DOWNLOAD ---
   document.getElementById('btnDownloadPdf').addEventListener('click', () => {
     const btn = document.getElementById('btnDownloadPdf');
     const originalText = btn.innerHTML;
     btn.innerHTML = '⏳ Generating PDF...';
     btn.disabled = true;
 
-    // Create a temporary container for html2pdf to render
+    // Create a temporary container for html2pdf
     const printContainer = document.createElement('div');
     printContainer.innerHTML = window.latestPrintHtml;
 
+    // PDF Configuration options
     const opt = {
       margin:       0.5,
       filename:     `${currentTest.title.replace(/\s+/g, '_')}_Result.pdf`,
@@ -693,6 +704,7 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
 
+    // Execute Download
     html2pdf().set(opt).from(printContainer).save().then(() => {
       btn.innerHTML = originalText;
       btn.disabled = false;
