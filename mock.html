@@ -9,6 +9,9 @@
 <link rel="preconnect" href="https://svxszmutdbdjhrirpajr.supabase.co" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm">
 
+<!-- PDF GENERATOR LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <style>
 :root{
   --bg-dark: #008DD5; --bg-panel: #0B2038; --bg-soft: #061426; --bg-muted: #1A3A5C; 
@@ -169,7 +172,7 @@ h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; margin-bottom: 10px; }
 .option-label .opt-text {
   flex: 1 1 auto; 
   min-width: 0; /* CRITICAL for flex wrapping */
-  word-break: break-all; overflow-wrap: anywhere; /* Forces giant text to break */
+  word-break: break-word; overflow-wrap: anywhere; /* Forces giant text to break */
   line-height: 1.5;
   margin-top: 4px;
 }
@@ -222,36 +225,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
 .modal-content h3 { font-size: 1.5rem; margin-bottom: 15px; color: var(--text); }
 .modal-content p { color: var(--muted); margin-bottom: 30px; font-size: 1rem; }
 .modal-actions { display: flex; gap: 15px; justify-content: center; }
-
-/* --- PRINT / PDF STYLES --- */
-#printArea { display: none; }
-@media print {
-  body * { visibility: hidden; }
-  #printArea, #printArea * { visibility: visible; }
-  #printArea { display: block; position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; padding: 20px; font-family: sans-serif; }
-  body { background: #fff !important; }
-  .floating-molecules, nav, main, .modal-overlay { display: none !important; }
-  
-  /* FIXED PDF TABLE */
-  table { 
-    width: 100%; max-width: 100%; border-collapse: collapse; margin-top: 20px; 
-    table-layout: fixed; /* Forces table not to stretch past page width */
-  }
-  th, td { 
-    border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top;
-    word-break: break-word; overflow-wrap: anywhere; /* Forces long unbroken strings to wrap */
-  }
-  th { background-color: #f4f4f4; font-weight: bold; }
-  th:nth-child(1), td:nth-child(1) { width: 8%; } /* Q.No */
-  th:nth-child(2), td:nth-child(2) { width: 35%; } /* Question */
-  th:nth-child(3), td:nth-child(3) { width: 25%; } /* Your Ans */
-  th:nth-child(4), td:nth-child(4) { width: 25%; } /* Correct Ans */
-  th:nth-child(5), td:nth-child(5) { width: 7%; }  /* Status */
-  
-  .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px; }
-  .correct-text { color: #008000; font-weight: bold; }
-  .wrong-text { color: #d00000; font-weight: bold; }
-}
 
 @media (max-width: 600px) {
   .question-box { padding: 25px 20px; }
@@ -357,9 +330,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
   </div>
 </div>
 
-<!-- Hidden area structured purely for PDF Printing -->
-<div id="printArea"></div>
-
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
@@ -417,9 +387,8 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     molecules.appendChild(bubble);
   }
 
-  // --- NEW: FETCH LOGIC WITH INSTANT CACHING ---
+  // --- FETCH LOGIC ---
   async function fetchMockTests() {
-    // 1. Immediately load tests from local memory if we have them
     const cacheKey = 'mockTestsCache';
     const cachedData = localStorage.getItem(cacheKey);
     
@@ -429,21 +398,18 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     }
 
     try {
-      // 2. Fetch fresh data from Supabase in the background
       const { data, error } = await supabase.from('mock_tests').select('*').order('id', { ascending: false });
       if (error) throw error;
       
-      // 3. Only update memory & re-render if the database changed
       if (!cachedData || JSON.stringify(data) !== cachedData) {
         allTests = data;
         localStorage.setItem(cacheKey, JSON.stringify(allTests));
         renderTests(allTests);
       }
     } catch (error) {
-      if (!cachedData) { // Fallback if no cache exists and database fails
+      if (!cachedData) {
         allTests = [
           { id: 1, title: 'Cell Structure & Physiology', subject: 'Biology', class_level: 'Class XI', duration_mins: 2, questions: [{ question: "Which organelle is the powerhouse?", options: ["Nucleus", "Mitochondria", "Ribosome", "Golgi"], correctIndex: 1 }, { question: "Role of diaphragm?", options: ["Filter dust", "Exchange gases", "Change thoracic volume", "Pump blood"], correctIndex: 2 }] },
-          { id: 2, title: 'Laws of Motion Basics', subject: 'Physics', class_level: 'Class IX', duration_mins: 3, questions: [{ question: "Newton's First Law is also:", options: ["Momentum", "Inertia", "Gravity", "Energy"], correctIndex: 1 }, { question: "SI unit of Force?", options: ["Joule", "Watt", "Newton", "Pascal"], correctIndex: 2 }] },
         ];
         renderTests(allTests);
       }
@@ -548,7 +514,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       const label = document.createElement('label');
       label.className = 'option-label'; label.htmlFor = radioId;
       
-      // FIXED: Separated letter and text into spans so flexbox text wraps perfectly
       label.innerHTML = `
         <span class="opt-letter">${letters[index]}</span>
         <span class="opt-text">${optText}</span>
@@ -570,7 +535,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
   document.getElementById('btnNext').addEventListener('click', () => { if(currentQuestionIndex < currentTest.questions.length - 1) { currentQuestionIndex++; loadQuestion(); } });
   document.getElementById('btnPrev').addEventListener('click', () => { if(currentQuestionIndex > 0) { currentQuestionIndex--; loadQuestion(); } });
 
-  // Custom Modal Trigger for Submit
   document.getElementById('btnSubmit').addEventListener('click', () => {
     showModal("Submit Test", "Are you sure you have completed the test and want to submit?", () => {
       clearInterval(timerInterval);
@@ -581,25 +545,31 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
   function submitTest() {
     let finalScore = 0;
     const reviewHTML = [];
-    const letters = ['A','B','C','D','E']; // Used for answer prefix
+    const letters = ['A','B','C','D','E']; 
     
-    // Prepare Printable PDF Table HTML
     const dateStr = new Date().toLocaleDateString();
-    let printHtml = `
-      <div class="print-header">
-        <h1>Azahar Mollah Science</h1>
-        <h2>Mock Test Official Report</h2>
-        <p><strong>Subject:</strong> ${currentTest.subject} | <strong>Class:</strong> ${currentTest.class_level}</p>
-        <p><strong>Test Name:</strong> ${currentTest.title} | <strong>Date:</strong> ${dateStr}</p>
-      </div>
-      <table>
-        <tr>
-          <th>Q. No</th>
-          <th>Question</th>
-          <th>Your Answer</th>
-          <th>Correct Answer</th>
-          <th>Status</th>
-        </tr>
+    
+    // --- PERFECTLY FORMATTED HTML FOR HTML2PDF ---
+    window.latestPrintHtml = `
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; padding: 30px; background: #fff;">
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #008DD5; padding-bottom: 20px;">
+          <h1 style="color: #008DD5; margin: 0 0 10px 0; font-size: 28px;">Azahar Mollah Science</h1>
+          <h2 style="margin: 0 0 10px 0; color: #444; font-size: 20px;">Mock Test Official Report</h2>
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Subject:</strong> ${currentTest.subject} &nbsp;|&nbsp; <strong>Class:</strong> ${currentTest.class_level}</p>
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Test Name:</strong> ${currentTest.title} &nbsp;|&nbsp; <strong>Date:</strong> ${dateStr}</p>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+          <thead>
+            <tr style="background-color: #f0f4f8; color: #333;">
+              <th style="border: 1px solid #ccc; padding: 10px; width: 8%; text-align: center;">Q.No</th>
+              <th style="border: 1px solid #ccc; padding: 10px; width: 40%; text-align: left;">Question</th>
+              <th style="border: 1px solid #ccc; padding: 10px; width: 22%; text-align: left;">Your Answer</th>
+              <th style="border: 1px solid #ccc; padding: 10px; width: 22%; text-align: left;">Correct Answer</th>
+              <th style="border: 1px solid #ccc; padding: 10px; width: 8%; text-align: center;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
 
     currentTest.questions.forEach((q, index) => {
@@ -607,7 +577,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       const isCorrect = uAns === q.correctIndex;
       if(isCorrect) finalScore++;
 
-      // Adding corresponding letter (A, B, C, D) to text output
       const uAnsText = uAns !== null ? `${letters[uAns]}) ${q.options[uAns]}` : "Not Attempted";
       const cAnsText = `${letters[q.correctIndex]}) ${q.options[q.correctIndex]}`;
 
@@ -623,26 +592,29 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       `);
 
       // PDF View Table Row
-      printHtml += `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${q.question}</td>
-          <td class="${isCorrect ? 'correct-text' : 'wrong-text'}">${uAnsText}</td>
-          <td>${cAnsText}</td>
-          <td class="${isCorrect ? 'correct-text' : 'wrong-text'}">${isCorrect ? 'Correct' : 'Incorrect'}</td>
-        </tr>
+      window.latestPrintHtml += `
+            <tr>
+              <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${index + 1}</td>
+              <td style="border: 1px solid #ccc; padding: 10px; word-wrap: break-word; overflow-wrap: anywhere;">${q.question}</td>
+              <td style="border: 1px solid #ccc; padding: 10px; word-wrap: break-word; overflow-wrap: anywhere; color: ${isCorrect ? '#008000' : '#d00000'}; font-weight: bold;">${uAnsText}</td>
+              <td style="border: 1px solid #ccc; padding: 10px; word-wrap: break-word; overflow-wrap: anywhere;">${cAnsText}</td>
+              <td style="border: 1px solid #ccc; padding: 10px; text-align: center; color: ${isCorrect ? '#008000' : '#d00000'}; font-weight: bold;">${isCorrect ? '✓' : '✗'}</td>
+            </tr>
       `;
     });
 
     const percentage = (finalScore / currentTest.questions.length) * 100;
     
-    // Finish Print HTML
-    printHtml += `</table>
-    <div style="margin-top:30px; padding:20px; background:#f4f4f4; border:1px solid #ddd; text-align:center;">
-      <h2 style="margin:0;">Final Score: ${finalScore} out of ${currentTest.questions.length}</h2>
-      <h3 style="margin-top:10px; color:${percentage>=50?'#008000':'#d00000'};">Percentage: ${percentage.toFixed(1)}%</h3>
-    </div>`;
-    document.getElementById('printArea').innerHTML = printHtml;
+    window.latestPrintHtml += `
+          </tbody>
+        </table>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f0f8ff; border: 1px solid #b3d4fc; text-align: center; border-radius: 12px;">
+          <h2 style="margin: 0; color: #003366; font-size: 24px;">Final Score: ${finalScore} out of ${currentTest.questions.length}</h2>
+          <h3 style="margin: 10px 0 0 0; color: ${percentage >= 50 ? '#008000' : '#d00000'}; font-size: 18px;">Accuracy: ${percentage.toFixed(1)}%</h3>
+        </div>
+      </div>
+    `;
 
     // Display Web View Scores
     document.getElementById('scoreTotal').textContent = `OUT OF ${currentTest.questions.length}`;
@@ -665,20 +637,18 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
 
     document.getElementById('reviewArea').innerHTML = `<h3 style="margin-bottom:20px; animation: slideUpFade 0.5s 0.8s forwards; opacity:0;">Review Answers</h3>` + reviewHTML.join('');
 
-    // --- NEW: UPDATE STATS UI (Accuracy & Percentile) ---
+    // --- UPDATE STATS UI (Accuracy & Percentile) ---
     document.getElementById('statAccuracy').textContent = `${percentage.toFixed(1)}%`;
     document.getElementById('statPercentile').innerHTML = `<span style="font-size:0.8rem; font-weight:400; color:#FFF;">Calculating...</span>`;
 
-    // --- NEW: FETCH PERCENTILE AND PUSH RESULT TO SUPABASE ANALYTICS ---
+    // --- FETCH PERCENTILE AND PUSH RESULT TO SUPABASE ANALYTICS ---
     (async () => {
       try {
-        // 1. Fetch previous test takers to calculate rank instantly
         const { data: history } = await supabase.from('test_results').select('percentage').eq('test_id', currentTest.id);
         
         let totalTakers = history ? history.length + 1 : 1;
         let belowOrEqual = history ? history.filter(d => d.percentage <= percentage).length + 1 : 1;
         
-        // Percentile formula
         let pct = Math.round((belowOrEqual / totalTakers) * 100);
         
         let suffix = "th";
@@ -688,7 +658,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
 
         document.getElementById('statPercentile').innerHTML = `${pct}<sup>${suffix}</sup>`;
 
-        // 2. Secretly save this user's result
         await supabase.from('test_results').insert([{
             test_id: currentTest.id,
             score: finalScore,
@@ -705,13 +674,39 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     switchView('view-result');
   }
 
-  // Print to PDF function
+  // --- NEW ROBUST PDF DOWNLOAD LOGIC ---
   document.getElementById('btnDownloadPdf').addEventListener('click', () => {
-    window.print();
+    const btn = document.getElementById('btnDownloadPdf');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ Generating PDF...';
+    btn.disabled = true;
+
+    // Create a temporary container for html2pdf to render
+    const printContainer = document.createElement('div');
+    printContainer.innerHTML = window.latestPrintHtml;
+
+    const opt = {
+      margin:       0.5,
+      filename:     `${currentTest.title.replace(/\s+/g, '_')}_Result.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(printContainer).save().then(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }).catch(err => {
+      console.error("PDF generation failed:", err);
+      btn.innerHTML = '❌ Error downloading';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }, 2500);
+    });
   });
 
   document.getElementById('btnReturnDir').addEventListener('click', () => { 
-    // Show Skeleton again while fetching fresh data
     document.getElementById('testGrid').innerHTML = `
       <div class="skeleton-wrapper">
         <div class="skeleton"><div class="skel-header"><div class="skel-badge"></div><div class="skel-icon"></div></div><div class="skel-title"></div><div class="skel-meta"></div><div class="skel-btn"></div></div>
@@ -722,7 +717,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     switchView('view-directory'); 
   });
   
-  // Custom Modal Trigger for Exit
   document.getElementById('navHomeBtn').addEventListener('click', (e) => {
     e.preventDefault();
     if(document.getElementById('view-quiz').classList.contains('active')) {
