@@ -1,542 +1,1299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard | Azahar Mollah</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard App</title>
+    
+    <!-- Supabase Core Dependency -->
+    <link rel="preconnect" href="https://svxszmutdbdjhrirpajr.supabase.co" crossorigin>
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm">
 
-<!-- PERFORMANCE BOOST: Preconnect to database and preload scripts -->
-<link rel="preconnect" href="https://svxszmutdbdjhrirpajr.supabase.co" crossorigin>
-<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm">
+    <style>
+        /* Modern, responsive, glassmorphism-inspired dark theme */
+        :root {
+            --bg-base: #061426;
+            --bg-surface: #0B2038;
+            --bg-surface-light: #1A3A5C;
+            --accent-primary: #00E5FF;
+            --accent-primary-hover: #00B8D4;
+            --accent-danger: #FF3366;
+            --accent-danger-hover: #D81B60;
+            --accent-success: #00FF66;
+            --text-main: #FFFFFF;
+            --text-muted: #A0B9D9;
+            --border-color: rgba(0, 229, 255, 0.2);
+            --shadow-neon: 0 0 15px rgba(0, 229, 255, 0.3);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-<style>
-:root{
-  --bg-dark: #008DD5; --bg-panel: #0B2038; --bg-soft: #061426; --bg-muted: #1A3A5C; 
-  --accent: #00E5FF; --text: #FFFFFF; --muted: #E0F7FA; --success: #00FF66; --danger: #FF3366;
-  --neon-glow: 0 0 15px rgba(0, 229, 255, 0.4), 0 0 30px rgba(0, 229, 255, 0.2);
-}
-*{ box-sizing:border-box; margin:0; padding:0; font-family:"Poppins",sans-serif; }
-body{ background: linear-gradient(135deg, #008DD5, #0B2038, #0099CC, #061426); background-size: 400% 400%; animation: bgShift 15s ease infinite; color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
-@keyframes bgShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-body::before { content: ""; position: fixed; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px); background-size: 35px 35px; z-index: -2; pointer-events: none; }
-a { color:inherit; text-decoration:none; cursor:pointer; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
 
-/* Nav & Layout */
-nav{ position:sticky; top:0; z-index:20; background:rgba(11, 32, 56, 0.9); border-bottom:1px solid rgba(0, 229, 255, 0.2); backdrop-filter:blur(12px); }
-.nav-inner{ padding:15px 5vw; display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; }
-.logo{ font-weight:800; font-size: 1.2rem; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
-.nav-links { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-.nav-links a{ font-size:0.9rem; font-weight:700; color:var(--muted); transition:0.3s; }
-.nav-links a:hover{ color:var(--text); text-shadow:0 0 10px rgba(0,229,255,0.6); }
+        body {
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at top right, rgba(0, 229, 255, 0.1), transparent 40%),
+                radial-gradient(circle at bottom left, rgba(0, 141, 213, 0.1), transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
 
-.view-section { display: none; padding: 30px 5vw; animation: fadeIn 0.4s ease forwards; }
-.view-section.active { display: block; }
-@keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+        /* Nav Header */
+        header {
+            background: rgba(11, 32, 56, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 5vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
 
-/* Buttons & Forms */
-.btn { padding: 12px 20px; border-radius: 10px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; background: linear-gradient(120deg, var(--accent), #FFFFFF, var(--accent)); background-size: 200% auto; color: #030A14; box-shadow: 0 5px 15px rgba(0,229,255,0.3); transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; width: 100%; }
-@media(min-width: 600px){ .btn { width: auto; } }
-.btn:hover:not(:disabled) { transform: translateY(-2px); background-position: 200% center; box-shadow: 0 10px 25px rgba(0,229,255,0.5); }
-.btn:active:not(:disabled) { transform: scale(0.98); }
-.btn:disabled { opacity: 0.7; cursor: not-allowed; }
-.btn-ghost { background: transparent; border: 2px solid var(--accent); color: var(--accent); box-shadow: none; }
-.btn-ghost:hover { background: rgba(0,229,255,0.1); color: #FFF; box-shadow: var(--neon-glow); }
-.btn-danger { background: transparent; border: 2px solid var(--danger); color: var(--danger); box-shadow: none; }
-.btn-danger:hover { background: rgba(255,51,102,0.1); color: #FFF; box-shadow: 0 0 15px rgba(255,51,102,0.4); }
+        .logo {
+            font-weight: 800;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
 
-.form-group { margin-bottom: 20px; text-align: left; width: 100%; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-.form-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 700; color: var(--muted); }
-.form-control { width: 100%; padding: 14px; background: rgba(0,0,0,0.2); border: 2px solid rgba(0,229,255,0.2); border-radius: 10px; color: #FFF; font-size: 1rem; transition: 0.3s; font-family: inherit; outline: none; resize: vertical; }
-.form-control:focus { border-color: var(--accent); box-shadow: inset 0 0 10px rgba(0,229,255,0.2), 0 0 15px rgba(0,229,255,0.3); background: rgba(0,229,255,0.05); }
-select.form-control option { background: var(--bg-panel); color: #FFF; }
+        .header-links {
+            display: flex;
+            gap: 1.5rem;
+        }
 
-/* Login Box */
-.login-box { max-width: 400px; margin: 40px auto; background: var(--bg-panel); padding: 40px 30px; border-radius: 20px; border: 2px solid var(--accent); box-shadow: var(--neon-glow); text-align: center; }
-.checkbox-wrap { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); cursor: pointer; margin-bottom: 25px; font-size: 0.95rem; user-select: none; }
-.checkbox-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+        .header-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
 
-/* Dashboard Layout */
-.dashboard-grid { display: grid; grid-template-columns: 250px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; }
-.sidebar { background: var(--bg-panel); border-radius: 20px; padding: 20px; border: 1px solid rgba(0,229,255,0.2); height: fit-content; }
-.sidebar-link { display: block; padding: 15px 20px; color: var(--muted); font-weight: 700; border-radius: 12px; margin-bottom: 10px; transition: 0.3s; }
-.sidebar-link:hover, .sidebar-link.active { background: rgba(0,229,255,0.1); color: #FFF; box-shadow: inset 4px 0 0 var(--accent); }
+        .header-links a:hover {
+            color: var(--text-main);
+            text-shadow: 0 0 8px var(--accent-primary);
+        }
 
-.panel-box { background: var(--bg-panel); border-radius: 20px; padding: 35px 30px; border: 1px solid rgba(0,229,255,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-.panel-header { margin-bottom: 25px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;}
-.panel-header h2 { font-size: 1.6rem; margin-bottom: 5px; }
+        .header-links .logout-btn { color: var(--accent-danger); display: none; }
+        .header-links .logout-btn:hover { text-shadow: 0 0 8px var(--accent-danger); }
 
-/* Question Builder */
-.q-block { background: var(--bg-soft); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 16px; margin-bottom: 20px; position: relative; transition:0.3s; }
-.q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 800; color: var(--accent); }
-.opt-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.opt-row input[type="radio"] { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-.opt-row input.form-control { flex: 1; }
+        /* Views */
+        .view-section {
+            display: none;
+            flex: 1;
+            padding: 2rem 5vw;
+            animation: fadeIn 0.4s ease forwards;
+        }
+        .view-section.active { display: flex; flex-direction: column; }
 
-/* Analytics Cards */
-.manage-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-.manage-card { background: var(--bg-soft); border: 1px solid rgba(0,229,255,0.2); border-radius: 16px; padding: 20px; transition: 0.3s; animation: fadeIn 0.4s ease; }
-.manage-card:hover { border-color: var(--accent); box-shadow: 0 5px 20px rgba(0,229,255,0.15); }
-.mc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-.mc-title { font-size: 1.2rem; font-weight: 800; color: #FFF; margin-bottom: 5px; }
-.mc-badge { background: rgba(0,229,255,0.1); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(0,229,255,0.3); }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
-.stat-box { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-.stat-box span { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
-.stat-box strong { font-size: 1.4rem; color: #FFF; font-weight: 800; }
-.mc-actions { display: flex; gap: 10px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-/* --- SKELETON LOADER UI (Analytics) --- */
-.skeleton-card { background: var(--bg-soft); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; height: 185px; display: flex; flex-direction: column; justify-content: space-between; }
-.skeleton-card::after { content: ""; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent); animation: skel-shimmer 1.5s infinite; }
-@keyframes skel-shimmer { 100% { left: 150%; } }
-.skel-title-box { width: 50%; height: 22px; background: rgba(255,255,255,0.1); border-radius: 6px; margin-bottom: 6px; }
-.skel-subtitle-box { width: 30%; height: 14px; background: rgba(255,255,255,0.1); border-radius: 4px; }
-.skel-stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 15px 0; }
-.skel-stat { height: 62px; background: rgba(255,255,255,0.08); border-radius: 10px; }
-.skel-actions-box { display: flex; gap: 10px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; }
-.skel-btn-box { width: 90px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+        /* Login Box */
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+        }
 
-/* Toast & Modals */
-#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(150%); background: var(--bg-panel); border-top: 4px solid var(--accent); padding: 15px 25px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); font-weight: 700; text-align: center; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; width: 90%; max-width: 400px; }
-#toast.show { transform: translateX(-50%) translateY(0); }
-#toast.error { border-top-color: var(--danger); }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-.modal-overlay.show { display: flex; }
-.modal-content { background: var(--bg-panel); border: 2px solid var(--accent); border-radius: 20px; padding: 30px; max-width: 400px; width: 100%; box-shadow: var(--neon-glow); text-align: center; }
-.modal-content h3 { margin-bottom: 10px; color: var(--text); }
-.modal-actions { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
+        .login-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--accent-primary);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: var(--shadow-neon);
+            text-align: center;
+        }
 
-/* Mobile */
-@media(max-width: 850px){ 
-  .dashboard-grid { grid-template-columns: 1fr; gap: 20px; }
-  .sidebar { display: flex; overflow-x: auto; white-space: nowrap; padding: 10px; gap: 10px; margin-bottom: 10px; }
-  .sidebar-link { margin-bottom: 0; padding: 12px 20px; border-radius: 10px; }
-  .form-row { grid-template-columns: 1fr; gap: 15px; }
-  .panel-box { padding: 25px 20px; }
-}
-</style>
+        .login-box h2 { margin-bottom: 1.5rem; font-size: 1.75rem; }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.25rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-primary);
+            box-shadow: inset 0 0 8px rgba(0,229,255,0.1), 0 0 12px rgba(0,229,255,0.2);
+            background: rgba(0, 229, 255, 0.05);
+        }
+
+        select.form-control option { background: var(--bg-surface); color: var(--text-main); }
+        
+        textarea.form-control { resize: vertical; min-height: 80px; }
+
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px; height: 18px; accent-color: var(--accent-primary);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0.85rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        @media(min-width: 600px) { .btn { width: auto; } }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), #0099CC);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
+        }
+        .btn-ghost:hover:not(:disabled) {
+            background: rgba(0, 229, 255, 0.1);
+            color: #FFF;
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 1px solid var(--accent-danger);
+            color: var(--accent-danger);
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(255, 51, 102, 0.15);
+            color: #FFF;
+        }
+
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+        /* Dashboard Layout */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1rem;
+            height: fit-content;
+            position: sticky;
+            top: 5rem;
+        }
+
+        .sidebar-section {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 1.2rem 0 0.5rem 0.8rem;
+        }
+        .sidebar-section:first-child { margin-top: 0; }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.8rem 1rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-item:hover, .sidebar-item.active {
+            background: rgba(0, 229, 255, 0.1);
+            color: #FFF;
+        }
+        .sidebar-item.active {
+            box-shadow: inset 3px 0 0 var(--accent-primary);
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.05);
+            margin: 1rem 0;
+        }
+
+        /* Main Content Panels */
+        .panel {
+            display: none;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            animation: fadeIn 0.3s ease forwards;
+        }
+        .panel.active { display: block; }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        .panel-header h2 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .panel-header p { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* Grids for Cards */
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-surface-light);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            border-color: var(--border-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .card-meta { font-size: 0.8rem; color: var(--text-muted); }
+
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.1);
+            white-space: nowrap;
+        }
+
+        .badge.success { background: rgba(0,255,102,0.1); color: var(--accent-success); border-color: rgba(0,255,102,0.2); }
+        .badge.danger { background: rgba(255,51,102,0.1); color: var(--accent-danger); border-color: rgba(255,51,102,0.2); }
+
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-pill {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-pill strong { color: var(--text-main); font-size: 0.9rem; }
+
+        .card-actions {
+            display: flex;
+            gap: 0.75rem;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+            padding-top: 1rem;
+        }
+
+        /* Builder Blocks */
+        .builder-block {
+            background: rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .builder-block:focus-within {
+            border-color: rgba(0, 229, 255, 0.3);
+            background: rgba(0, 229, 255, 0.02);
+        }
+
+        .block-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .opt-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.75rem;
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .opt-row input[type="radio"] {
+            width: 20px; height: 20px; accent-color: var(--accent-primary); cursor: pointer; flex-shrink: 0;
+        }
+
+        .file-upload-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+            border: 1px dashed rgba(255,255,255,0.2);
+        }
+
+        .file-upload-wrap input[type="file"] {
+            flex: 1; color: var(--text-main); font-size: 0.85rem;
+        }
+        
+        .file-status { font-size: 0.8rem; font-weight: bold; }
+
+        /* Skeletons */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Toast & Modal */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translate(-50%, 100px);
+            background: var(--bg-surface);
+            border: 1px solid var(--accent-primary);
+            color: #FFF;
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-weight: 600;
+            z-index: 2000;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+        }
+        #toast.show { transform: translate(-50%, 0); opacity: 1; }
+        #toast.error { border-color: var(--accent-danger); border-top-width: 4px; }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1500;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+            padding: 1rem;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+
+        .modal-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: var(--transition);
+        }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-box h3 { margin-bottom: 0.5rem; font-size: 1.3rem; }
+        .modal-box p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+        .modal-actions { display: flex; gap: 1rem; justify-content: center; }
+
+        /* Responsive */
+        @media(max-width: 850px) {
+            .dashboard-layout { grid-template-columns: 1fr; gap: 1rem; }
+            .sidebar {
+                position: static;
+                display: flex;
+                overflow-x: auto;
+                padding: 1rem;
+                gap: 0.5rem;
+                white-space: nowrap;
+                border-radius: var(--radius-md);
+            }
+            .sidebar-section, .sidebar-divider { display: none; }
+            .sidebar-item { margin: 0; padding: 0.6rem 1rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .panel { padding: 1.5rem; }
+        }
+    </style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-inner">
-    <div class="logo">🔒 Admin Portal</div>
-    <div class="nav-links">
-      <a href="tests.html">View Tests</a>
-      <a href="index.html">Main Site</a>
-      <a id="btnLogout" style="display:none; color:var(--danger);">Logout</a>
-    </div>
-  </div>
-</nav>
+    <!-- Header -->
+    <header>
+        <div class="logo">🔒 Admin Portal</div>
+        <div class="header-links">
+            <a>View Tests</a>
+            <a>Main Site</a>
+            <a class="logout-btn" id="btnLogout">Logout ✕</a>
+        </div>
+    </header>
 
-<!-- LOGIN VIEW -->
-<div id="view-login" class="view-section active">
-  <div class="login-box">
-    <h2 style="margin-bottom: 10px; font-size: 1.8rem;">🔐 Admin Access</h2>
-    <p style="color:var(--muted); margin-bottom: 30px; font-size: 0.9rem;">Enter the database-secured admin password.</p>
-    <div class="form-group"><input type="password" id="adminPassword" class="form-control" placeholder="Enter Admin Password"></div>
-    <label class="checkbox-wrap"><input type="checkbox" id="rememberMe"> Keep me logged in</label>
-    <button class="btn" id="btnLogin" style="width:100%;">Unlock Dashboard</button>
-  </div>
-</div>
+    <!-- Login View -->
+    <main id="view-login" class="view-section active">
+        <div class="login-wrapper">
+            <div class="login-box">
+                <h2>🔐 Admin Access</h2>
+                <div class="form-group">
+                    <input type="password" id="adminPassword" class="form-control" placeholder="Enter Secure Password" onkeydown="if(event.key==='Enter') document.getElementById('btnLogin').click()">
+                </div>
+                <button class="btn btn-primary" id="btnLogin" style="width: 100%">Unlock Dashboard</button>
+            </div>
+        </div>
+    </main>
 
-<!-- DASHBOARD VIEW -->
-<div id="view-dashboard" class="view-section">
-  <div class="dashboard-grid">
+    <!-- Dashboard View -->
+    <main id="view-dashboard" class="view-section">
+        <div class="dashboard-layout">
+            
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="sidebar-section">Mock Tests</div>
+                <div class="sidebar-item active" data-target="panel-manage-tests">📊 Manage Tests</div>
+                <div class="sidebar-item" data-target="panel-build-test">➕ Test Builder</div>
+                
+                <div class="sidebar-divider"></div>
+                
+                <div class="sidebar-section">Study Sets</div>
+                <div class="sidebar-item" data-target="panel-manage-sets">📚 Manage Sets</div>
+                <div class="sidebar-item" data-target="panel-build-set">📁 Set Builder</div>
+                
+                <div class="sidebar-divider"></div>
+                
+                <div class="sidebar-section">System</div>
+                <div class="sidebar-item" data-target="panel-settings">⚙️ Admin Settings</div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <div class="content-area">
+                
+                <!-- Panel: Manage Tests -->
+                <div id="panel-manage-tests" class="panel active">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Manage Mock Tests</h2>
+                            <p>View, edit, or remove published tests.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="app.navTo('panel-build-test')">➕ Create Test</button>
+                    </div>
+                    <div id="grid-tests" class="data-grid">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Panel: Build Test -->
+                <div id="panel-build-test" class="panel">
+                    <div class="panel-header">
+                        <div style="flex:1">
+                            <h2 id="title-build-test">Create a Mock Test</h2>
+                            <label class="checkbox-label" style="margin-top: 8px;">
+                                <input type="checkbox" id="test-visible" checked> Make Test Visible
+                            </label>
+                        </div>
+                        <button class="btn btn-danger" id="btn-cancel-test" style="display:none;" onclick="app.cancelTestEdit()">✕ Cancel</button>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Test Title</label>
+                            <input type="text" id="test-title" class="form-control" placeholder="e.g. Kinematics Quiz">
+                        </div>
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <select id="test-subject" class="form-control">
+                                <option>Physics</option><option>Chemistry</option><option>Biology</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Target Class</label>
+                            <select id="test-class" class="form-control">
+                                <option>Class VI</option><option>Class VII</option><option>Class VIII</option>
+                                <option>Class IX</option><option>Class X</option><option>Class XI</option>
+                                <option>Class XII</option><option>NEET Preparation</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Duration (Mins)</label>
+                            <input type="number" id="test-duration" class="form-control" value="15" min="1">
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem; font-size: 1.1rem; color: var(--accent-primary);">❓ Questions</h3>
+                    <div id="questions-container"></div>
+                    
+                    <button class="btn btn-ghost" style="width: 100%; margin-bottom: 2rem;" onclick="app.addQuestion()">➕ Add Question</button>
+                    <button class="btn btn-primary" id="btn-save-test" style="width: 100%; font-size: 1.1rem;" onclick="app.saveTest()">🚀 Publish Test</button>
+                </div>
+
+                <!-- Panel: Manage Sets -->
+                <div id="panel-manage-sets" class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Manage Study Sets</h2>
+                            <p>Edit or delete material bundles (PDFs & Videos).</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="app.navTo('panel-build-set')">➕ Create Set</button>
+                    </div>
+                    <div id="grid-sets" class="data-grid">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Panel: Build Set -->
+                <div id="panel-build-set" class="panel">
+                    <div class="panel-header">
+                        <div style="flex:1">
+                            <h2 id="title-build-set">Create a Study Set</h2>
+                            <label class="checkbox-label" style="margin-top: 8px;">
+                                <input type="checkbox" id="set-visible" checked> Make Set Appear At Home Page
+                            </label>
+                        </div>
+                        <button class="btn btn-danger" id="btn-cancel-set" style="display:none;" onclick="app.cancelSetEdit()">✕ Cancel</button>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Set Title</label>
+                            <input type="text" id="set-title" class="form-control" placeholder="e.g. Chapter 1 Notes">
+                        </div>
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <select id="set-subject" class="form-control">
+                                <option>Physics</option><option>Chemistry</option><option>Biology</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Target Class</label>
+                            <select id="set-class" class="form-control">
+                                <option>Class 9</option><option>Class 10</option><option>Class 11</option>
+                                <option>Class 12</option><option>NEET Preparation</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Link Mock Test (Optional)</label>
+                            <select id="set-mock-test" class="form-control">
+                                <option value="">-- No Test Linked --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="set-desc" class="form-control" placeholder="Brief details about this study set..."></textarea>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem; font-size: 1.1rem; color: var(--accent-primary);">📚 Resources (Video/PDF)</h3>
+                    <div id="resources-container"></div>
+                    
+                    <button class="btn btn-ghost" style="width: 100%; margin-bottom: 2rem;" onclick="app.addResource()">➕ Add Resource</button>
+                    <button class="btn btn-primary" id="btn-save-set" style="width: 100%; font-size: 1.1rem;" onclick="app.saveSet()">🚀 Publish Study Set</button>
+                </div>
+
+                <!-- Panel: Settings -->
+                <div id="panel-settings" class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Admin Settings</h2>
+                            <p>Update your master access credentials.</p>
+                        </div>
+                    </div>
+                    <div class="card" style="max-width: 500px;">
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" id="cur-pass" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" id="new-pass" class="form-control">
+                        </div>
+                        <button class="btn btn-primary" style="margin-top: 10px;" onclick="app.updatePassword()">💾 Update Password</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Global Overlays -->
+    <div id="toast">Notification</div>
     
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <a class="sidebar-link active" onclick="switchTab('tab-manage')">📊 Manage Analytics</a>
-      <a class="sidebar-link" onclick="switchTab('tab-create')">➕ Test Builder</a>
-      <a class="sidebar-link" onclick="switchTab('tab-settings')">⚙️ Admin Settings</a>
+    <div class="modal-overlay" id="modal">
+        <div class="modal-box">
+            <h3 id="modal-title">Confirm</h3>
+            <p id="modal-msg">Are you sure?</p>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="app.closeModal()">Cancel</button>
+                <button class="btn btn-danger" id="modal-btn">Confirm</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-      <!-- TAB 0: MANAGE & ANALYTICS -->
-      <div id="tab-manage" class="panel-box">
-        <div class="panel-header">
-          <div>
-            <h2>Manage Tests</h2>
-            <p style="color:var(--muted); font-size:0.9rem;">View analytics, edit, or delete published mock tests.</p>
-          </div>
-          <button class="btn" onclick="switchTab('tab-create')" style="font-size: 0.8rem; padding: 8px 15px;">+ Create New</button>
-        </div>
-        
-        <div id="manageGrid" class="manage-grid">
-          <!-- Skeletons (replaced by JS on load) -->
-          <div class="skeleton-card"><div class="skel-header"><div class="skel-title-box"></div><div class="skel-subtitle-box"></div></div><div class="skel-stats-container"><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div></div><div class="skel-actions-box"><div class="skel-btn-box"></div><div class="skel-btn-box"></div></div></div>
-        </div>
-      </div>
+        // Constants & Supabase Client Init
+        const SUPABASE_URL = 'https://svxszmutdbdjhrirpajr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eHN6bXV0ZGJkamhyaXJwYWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDAzMjcsImV4cCI6MjA4OTIxNjMyN30.0onmcNCCREB1T-xktpGPGj8Ei1iDnjCRoc4RoJ8yOTs';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      <!-- TAB 1: CREATE / EDIT TEST -->
-      <div id="tab-create" class="panel-box" style="display:none;">
-        <div class="panel-header">
-          <div>
-            <h2 id="builderTitle">Create a Mock Test</h2>
-            <p style="color:var(--muted); font-size:0.9rem;">Fill in the details and add multiple choice questions.</p>
-          </div>
-          <button class="btn btn-danger" id="btnCancelEdit" style="display:none; font-size: 0.8rem; padding: 8px 15px;">Cancel Edit</button>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group"><label>Test Title</label><input type="text" id="testTitle" class="form-control" placeholder="e.g. Thermodynamics Quiz"></div>
-          <div class="form-group"><label>Subject</label><select id="testSubject" class="form-control"><option value="Physics">Physics</option><option value="Chemistry">Chemistry</option><option value="Biology">Biology</option></select></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Target Class</label><select id="testClass" class="form-control"><option value="Class IX">Class IX</option><option value="Class X">Class X</option><option value="Class XI">Class XI</option><option value="Class XII">Class XII</option></select></div>
-          <div class="form-group"><label>Duration (Minutes)</label><input type="number" id="testDuration" class="form-control" value="15" min="1"></div>
-        </div>
+        // Application State
+        const state = {
+            loggedIn: false,
+            tests: [],
+            sets: [],
+            editTestId: null,
+            editSetId: null,
+            qCount: 0,
+            rCount: 0
+        };
 
-        <h3 style="margin: 30px 0 15px; color:var(--accent); font-size: 1.2rem;">Questions</h3>
-        <div id="questionsContainer"></div>
-        <button class="btn btn-ghost" id="btnAddQuestion" style="margin-bottom: 30px; width:100%; font-size: 0.95rem;">+ Add Another Question</button>
-        <hr style="border:0; border-top:1px dashed rgba(255,255,255,0.2); margin-bottom: 25px;">
-        <button class="btn" id="btnPublishTest" style="width:100%; font-size:1.1rem; padding: 16px;">🚀 Publish Test to Database</button>
-      </div>
+        // Utility: UI Helpers
+        const ui = {
+            toast(msg, isErr = false) {
+                const el = document.getElementById('toast');
+                el.textContent = msg;
+                el.className = isErr ? 'error show' : 'show';
+                setTimeout(() => el.classList.remove('show'), 3500);
+            },
+            confirm(title, msg, btnText, callback) {
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('modal-msg').textContent = msg;
+                const btn = document.getElementById('modal-btn');
+                btn.textContent = btnText;
+                btn.onclick = () => { callback(); ui.closeModal(); };
+                document.getElementById('modal').classList.add('show');
+            },
+            closeModal() {
+                document.getElementById('modal').classList.remove('show');
+            },
+            skeletonCard() {
+                return `
+                    <div class="card">
+                        <div class="skeleton" style="width: 60%; height: 24px; margin-bottom: 8px;"></div>
+                        <div class="skeleton" style="width: 40%; height: 16px; margin-bottom: 16px;"></div>
+                        <div style="display:flex; gap:10px;">
+                            <div class="skeleton" style="width: 80px; height: 35px; border-radius:8px;"></div>
+                            <div class="skeleton" style="width: 80px; height: 35px; border-radius:8px;"></div>
+                        </div>
+                    </div>`;
+            },
+            escaped(str) {
+                return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            }
+        };
 
-      <!-- TAB 2: SETTINGS -->
-      <div id="tab-settings" class="panel-box" style="display:none;">
-        <div class="panel-header">
-          <h2>Admin Settings</h2>
-          <p style="color:var(--muted); font-size:0.9rem;">Update your global database admin password.</p>
-        </div>
-        <div class="form-group"><label>Current Password</label><input type="password" id="currentPassword" class="form-control"></div>
-        <div class="form-group"><label>New Password</label><input type="password" id="newPassword" class="form-control"></div>
-        <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPassword" class="form-control"></div>
-        <button class="btn" id="btnUpdatePassword">🔐 Update Password</button>
-      </div>
+        // Expose to window for inline HTML event handlers
+        window.app = {
+            closeModal: ui.closeModal,
 
-    </div>
-  </div>
-</div>
+            // Navigation
+            navTo(panelId) {
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                
+                document.getElementById(panelId).classList.add('active');
+                const navItem = document.querySelector(`.sidebar-item[data-target="${panelId}"]`);
+                if(navItem) navItem.classList.add('active');
 
-<!-- Reusable Confirmation Modal -->
-<div class="modal-overlay" id="confirmModal">
-  <div class="modal-content">
-    <h3 id="modalTitle">Confirm</h3>
-    <p id="modalMsg" style="color: var(--muted); margin-bottom: 20px; font-size:0.9rem;">Are you sure?</p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="document.getElementById('confirmModal').classList.remove('show')">Cancel</button>
-      <button class="btn btn-danger" id="modalBtnConfirm">Confirm</button>
-    </div>
-  </div>
-</div>
+                if (panelId === 'panel-manage-tests') app.loadTests();
+                if (panelId === 'panel-manage-sets') app.loadSets();
+                if (panelId === 'panel-build-set') app.refreshTestDropdown();
+            },
 
-<div id="toast">Message</div>
+            // Tests Module
+            async loadTests() {
+                const grid = document.getElementById('grid-tests');
+                grid.innerHTML = ui.skeletonCard() + ui.skeletonCard();
+                
+                const { data, error } = await supabase.from('mock_tests').select('*').order('id', { ascending: false });
+                if (error) return grid.innerHTML = `<p style="color:var(--accent-danger)">${error.message}</p>`;
+                
+                state.tests = data || [];
+                if (!state.tests.length) return grid.innerHTML = '<p style="color:var(--text-muted)">No tests found.</p>';
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+                grid.innerHTML = state.tests.map(t => {
+                    const visBadge = t.visible !== false ? '<span class="badge success">👁️ Visible</span>' : '<span class="badge danger">🚫 Hidden</span>';
+                    const qCount = t.questions ? t.questions.length : 0;
+                    return `
+                    <div class="card" id="tc-${t.id}">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${ui.escaped(t.title)} ${visBadge}</div>
+                                <div class="card-meta">${t.subject} • ${t.class_level}</div>
+                            </div>
+                            <span class="badge">ID: ${t.id}</span>
+                        </div>
+                        <div class="stats-row">
+                            <div class="stat-pill"><span>❓ Qs</span><strong>${qCount}</strong></div>
+                            <div class="stat-pill"><span>⏱️ Mins</span><strong>${t.duration_mins}</strong></div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="app.editTest('${t.id}')">✏️ Edit</button>
+                            <button class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="app.delTest('${t.id}', '${ui.escaped(t.title)}')">🗑️ Delete</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            },
 
-  const supabaseUrl = 'https://svxszmutdbdjhrirpajr.supabase.co'; 
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eHN6bXV0ZGJkamhyaXJwYWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDAzMjcsImV4cCI6MjA4OTIxNjMyN30.0onmcNCCREB1T-xktpGPGj8Ei1iDnjCRoc4RoJ8yOTs';
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+            delTest(id, title) {
+                ui.confirm("Delete Test", `Permanently remove "${title}"? Associated results will be deleted.`, "Delete", async () => {
+                    document.getElementById(`tc-${id}`).style.opacity = '0.5';
+                    // Clean up relations
+                    await supabase.from('test_results').delete().eq('test_id', id);
+                    await supabase.from('study_sets').update({ mock_test_id: null }).eq('mock_test_id', id);
+                    
+                    const { error } = await supabase.from('mock_tests').delete().eq('id', id);
+                    if (error) return ui.toast(error.message, true);
+                    ui.toast("Test deleted successfully");
+                    app.loadTests();
+                });
+            },
 
-  // App State
-  let editingTestId = null;
-  let allDatabaseTests = [];
+            editTest(id) {
+                // Use == instead of === so stringified ID from HTML matches the DB int8
+                const t = state.tests.find(x => x.id == id);
+                if (!t) return;
+                state.editTestId = t.id;
+                
+                document.getElementById('title-build-test').textContent = "✏️ Edit: " + t.title;
+                document.getElementById('btn-save-test').textContent = "💾 Update Test";
+                document.getElementById('btn-cancel-test').style.display = 'block';
 
-  function showToast(msg, isError = false) {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg; toast.className = isError ? 'error show' : 'show';
-    setTimeout(() => toast.classList.remove('show'), 3500);
-  }
+                document.getElementById('test-title').value = t.title;
+                document.getElementById('test-subject').value = t.subject;
+                document.getElementById('test-class').value = t.class_level;
+                document.getElementById('test-duration').value = t.duration_mins;
+                document.getElementById('test-visible').checked = t.visible !== false;
 
-  function showConfirmModal(title, msg, btnText, callback) {
-    document.getElementById('modalTitle').textContent = title;
-    document.getElementById('modalMsg').textContent = msg;
-    const btn = document.getElementById('modalBtnConfirm');
-    btn.textContent = btnText;
-    btn.onclick = () => { callback(); document.getElementById('confirmModal').classList.remove('show'); };
-    document.getElementById('confirmModal').classList.add('show');
-  }
+                const c = document.getElementById('questions-container');
+                c.innerHTML = '';
+                state.qCount = 0;
+                
+                if (t.questions && t.questions.length) {
+                    t.questions.forEach(q => app.addQuestion(q));
+                } else {
+                    app.addQuestion();
+                }
 
-  window.switchTab = function(tabId) {
-    document.getElementById('tab-manage').style.display = 'none';
-    document.getElementById('tab-create').style.display = 'none';
-    document.getElementById('tab-settings').style.display = 'none';
-    document.getElementById(tabId).style.display = 'block';
-    
-    document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-    event.target.classList.add('active');
+                app.navTo('panel-build-test');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
 
-    if(tabId === 'tab-manage') loadManageAnalytics();
-  }
+            cancelTestEdit() {
+                state.editTestId = null;
+                document.getElementById('title-build-test').textContent = "Create a Mock Test";
+                document.getElementById('btn-save-test').textContent = "🚀 Publish Test";
+                document.getElementById('btn-cancel-test').style.display = 'none';
+                document.getElementById('test-title').value = '';
+                document.getElementById('test-visible').checked = true;
+                document.getElementById('questions-container').innerHTML = '';
+                state.qCount = 0;
+                app.addQuestion();
+            },
 
-  // --- AUTH LOGIC ---
-  function checkLoginStatus() {
-    const isLoggedIn = localStorage.getItem('adminLoggedIn') || sessionStorage.getItem('adminLoggedIn');
-    if (isLoggedIn === 'true') {
-      document.getElementById('view-login').classList.remove('active');
-      document.getElementById('view-dashboard').classList.add('active');
-      document.getElementById('btnLogout').style.display = 'block';
-      loadManageAnalytics(); // Load data on login
-    } else {
-      document.getElementById('view-dashboard').classList.remove('active');
-      document.getElementById('view-login').classList.add('active');
-      document.getElementById('btnLogout').style.display = 'none';
-    }
-  }
+            addQuestion(data = null) {
+                state.qCount++; 
+                const id = state.qCount;
+                const d = document.createElement('div');
+                d.className = 'builder-block q-block'; 
+                d.id = `q-${id}`;
+                
+                const qT = data ? data.question : '';
+                const o = data && data.options ? data.options : ['', '', '', ''];
+                const cI = data ? data.correctIndex : 0;
 
-  document.getElementById('btnLogin').addEventListener('click', async () => {
-    const password = document.getElementById('adminPassword').value;
-    const rememberMe = document.getElementById('rememberMe').checked;
-    const btn = document.getElementById('btnLogin');
-    
-    if(!password) return showToast("Enter the admin password", true);
-    btn.textContent = "Verifying..."; btn.disabled = true;
+                d.innerHTML = `
+                    <div class="block-top"><span>Question ${id}</span>
+                        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.8rem;" onclick="document.getElementById('q-${id}').remove(); app.reindex('q-block', 'Question ')">✕</button>
+                    </div>
+                    <div class="form-group">
+                        <textarea class="form-control q-txt" placeholder="Question description...">${ui.escaped(qT)}</textarea>
+                    </div>
+                    ${[0,1,2,3].map(i => `
+                    <div class="opt-row">
+                        <input type="radio" name="correct_${id}" value="${i}" ${cI === i ? 'checked' : ''}>
+                        <input type="text" class="form-control q-opt" value="${ui.escaped(o[i])}" placeholder="Option ${['A','B','C','D'][i]}">
+                    </div>`).join('')}
+                `;
+                document.getElementById('questions-container').appendChild(d);
+            },
 
-    const { data: isCorrect, error } = await supabase.rpc('login_admin', { pass_guess: password });
-    btn.textContent = "Unlock Dashboard"; btn.disabled = false;
+            async saveTest() {
+                const title = document.getElementById('test-title').value.trim();
+                if (!title) return ui.toast("Title is required", true);
 
-    if(isCorrect) {
-      if(rememberMe) localStorage.setItem('adminLoggedIn', 'true');
-      else sessionStorage.setItem('adminLoggedIn', 'true');
-      showToast("Login Successful!"); checkLoginStatus();
-    } else showToast("Incorrect password.", true);
-  });
+                const blocks = document.querySelectorAll('.q-block');
+                const qs = [];
+                let valid = true;
 
-  document.getElementById('btnLogout').addEventListener('click', () => {
-    showConfirmModal("Secure Logout", "Are you sure you want to end your admin session?", "Yes, Logout", () => {
-      localStorage.removeItem('adminLoggedIn'); sessionStorage.removeItem('adminLoggedIn');
-      checkLoginStatus(); showToast("Logged out successfully.");
-    });
-  });
+                blocks.forEach(b => {
+                    const qTxt = b.querySelector('.q-txt').value.trim();
+                    const opts = Array.from(b.querySelectorAll('.q-opt')).map(inp => inp.value.trim());
+                    const rChecked = b.querySelector('input[type="radio"]:checked');
+                    if (!qTxt || opts.includes("")) valid = false;
+                    qs.push({ question: qTxt, options: opts, correctIndex: parseInt(rChecked ? rChecked.value : 0) });
+                });
 
-  // --- MANAGE & ANALYTICS LOGIC ---
-  async function loadManageAnalytics() {
-    const grid = document.getElementById('manageGrid');
-    
-    // Inject Skeletons while loading
-    grid.innerHTML = `
-      <div class="skeleton-card"><div class="skel-header"><div class="skel-title-box"></div><div class="skel-subtitle-box"></div></div><div class="skel-stats-container"><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div></div><div class="skel-actions-box"><div class="skel-btn-box"></div><div class="skel-btn-box"></div></div></div>
-      <div class="skeleton-card"><div class="skel-header"><div class="skel-title-box"></div><div class="skel-subtitle-box"></div></div><div class="skel-stats-container"><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div></div><div class="skel-actions-box"><div class="skel-btn-box"></div><div class="skel-btn-box"></div></div></div>
-      <div class="skeleton-card"><div class="skel-header"><div class="skel-title-box"></div><div class="skel-subtitle-box"></div></div><div class="skel-stats-container"><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div><div class="skel-stat"></div></div><div class="skel-actions-box"><div class="skel-btn-box"></div><div class="skel-btn-box"></div></div></div>
-    `;
+                if (!valid || qs.length === 0) return ui.toast("Fill all question fields", true);
 
-    // Fetch Tests
-    const { data: tests, error: err1 } = await supabase.from('mock_tests').select('*').order('id', { ascending: false });
-    // Fetch Results/Analytics
-    const { data: results, error: err2 } = await supabase.from('test_results').select('test_id, percentage');
+                const payload = {
+                    title,
+                    subject: document.getElementById('test-subject').value,
+                    class_level: document.getElementById('test-class').value,
+                    duration_mins: parseInt(document.getElementById('test-duration').value),
+                    visible: document.getElementById('test-visible').checked,
+                    questions: qs
+                };
 
-    if(err1) return grid.innerHTML = `<p style="color: var(--danger); text-align: center;">Database Error: ${err1.message}</p>`;
+                const btn = document.getElementById('btn-save-test');
+                const origTxt = btn.textContent;
+                btn.textContent = "Saving..."; btn.disabled = true;
 
-    allDatabaseTests = tests || [];
-    if(allDatabaseTests.length === 0) return grid.innerHTML = '<p style="color: var(--muted); text-align: center;">No tests created yet.</p>';
+                const { error } = state.editTestId 
+                    ? await supabase.from('mock_tests').update(payload).eq('id', state.editTestId)
+                    : await supabase.from('mock_tests').insert([payload]);
 
-    // Process Analytics
-    const statsMap = {};
-    if(results) {
-        results.forEach(r => {
-            if(!statsMap[r.test_id]) statsMap[r.test_id] = [];
-            statsMap[r.test_id].push(r.percentage);
+                btn.textContent = origTxt; btn.disabled = false;
+
+                if (error) return ui.toast(error.message, true);
+                
+                ui.toast(state.editTestId ? "Test Updated!" : "Test Created!");
+                app.cancelTestEdit();
+                app.loadTests(); // Refresh cache
+            },
+
+            // Sets Module
+            async refreshTestDropdown() {
+                const { data } = await supabase.from('mock_tests').select('id, title, class_level').order('id', {ascending: false});
+                const sel = document.getElementById('set-mock-test');
+                sel.innerHTML = '<option value="">-- No Test Linked --</option>' + 
+                    (data || []).map(t => `<option value="${t.id}">[${t.class_level}] ${ui.escaped(t.title)}</option>`).join('');
+            },
+
+            async loadSets() {
+                const grid = document.getElementById('grid-sets');
+                grid.innerHTML = ui.skeletonCard() + ui.skeletonCard();
+                
+                const { data, error } = await supabase.from('study_sets').select(`*, study_resources(*)`).order('id', { ascending: false });
+                if (error) return grid.innerHTML = `<p style="color:var(--accent-danger)">${error.message}</p>`;
+                
+                state.sets = data || [];
+                if (!state.sets.length) return grid.innerHTML = '<p style="color:var(--text-muted)">No study sets found.</p>';
+
+                grid.innerHTML = state.sets.map(s => {
+                    const visBadge = s.visible !== false ? '<span class="badge success">👁️ Visible</span>' : '<span class="badge danger">🚫 Hidden</span>';
+                    const res = s.study_resources || [];
+                    const p = res.filter(r => r.type === 'pdf').length;
+                    const v = res.filter(r => r.type === 'video').length;
+                    
+                    return `
+                    <div class="card" id="sc-${s.id}">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${ui.escaped(s.title)} ${visBadge}</div>
+                                <div class="card-meta">${s.subject} • ${s.class_name}</div>
+                            </div>
+                            <span class="badge">ID: ${s.id}</span>
+                        </div>
+                        <div class="stats-row">
+                            <div class="stat-pill"><span>📄 PDFs</span><strong>${p}</strong></div>
+                            <div class="stat-pill"><span>▶️ Vids</span><strong>${v}</strong></div>
+                            <div class="stat-pill"><span>🔗 Test</span><strong>${s.mock_test_id ? 'Yes' : 'No'}</strong></div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="app.editSet('${s.id}')">✏️ Edit</button>
+                            <button class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="app.delSet('${s.id}', '${ui.escaped(s.title)}')">🗑️ Delete</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            },
+
+            delSet(id, title) {
+                ui.confirm("Delete Set", `Remove "${title}" and all associated resources?`, "Delete", async () => {
+                    document.getElementById(`sc-${id}`).style.opacity = '0.5';
+                    // Delete child resources first, then parent set
+                    await supabase.from('study_resources').delete().eq('set_id', id);
+                    const { error } = await supabase.from('study_sets').delete().eq('id', id);
+                    
+                    if (error) return ui.toast(error.message, true);
+                    ui.toast("Set deleted");
+                    app.loadSets();
+                });
+            },
+
+            async editSet(id) {
+                // Use == instead of === because `id` might be passed as string from HTML
+                const s = state.sets.find(x => x.id == id);
+                if (!s) return;
+                state.editSetId = s.id; // Store exact UUID
+
+                document.getElementById('title-build-set').textContent = "✏️ Edit: " + s.title;
+                document.getElementById('btn-save-set').textContent = "💾 Update Set";
+                document.getElementById('btn-cancel-set').style.display = 'block';
+
+                document.getElementById('set-title').value = s.title;
+                document.getElementById('set-subject').value = s.subject;
+                document.getElementById('set-class').value = s.class_name;
+                document.getElementById('set-desc').value = s.description || '';
+                document.getElementById('set-visible').checked = s.visible !== false;
+
+                await app.refreshTestDropdown();
+                document.getElementById('set-mock-test').value = s.mock_test_id || '';
+
+                const c = document.getElementById('resources-container');
+                c.innerHTML = '';
+                state.rCount = 0;
+
+                if (s.study_resources && s.study_resources.length) {
+                    const sorted = [...s.study_resources].sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
+                    sorted.forEach(r => app.addResource(r));
+                } else {
+                    app.addResource();
+                }
+
+                app.navTo('panel-build-set');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            cancelSetEdit() {
+                state.editSetId = null;
+                document.getElementById('title-build-set').textContent = "Create a Study Set";
+                document.getElementById('btn-save-set').textContent = "🚀 Publish Study Set";
+                document.getElementById('btn-cancel-set').style.display = 'none';
+                
+                document.getElementById('set-title').value = '';
+                document.getElementById('set-desc').value = '';
+                document.getElementById('set-mock-test').value = '';
+                document.getElementById('set-visible').checked = true;
+                
+                document.getElementById('resources-container').innerHTML = '';
+                state.rCount = 0;
+                app.addResource();
+            },
+
+            addResource(data = null) {
+                state.rCount++;
+                const id = state.rCount;
+                const d = document.createElement('div');
+                d.className = 'builder-block r-block';
+                d.id = `r-${id}`;
+
+                const t = data ? data.type : 'video';
+                const tit = data ? data.title : '';
+                const u = data ? data.url : '';
+
+                d.innerHTML = `
+                    <div class="block-top"><span>Resource ${id}</span>
+                        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.8rem;" onclick="document.getElementById('r-${id}').remove(); app.reindex('r-block', 'Resource ')">✕</button>
+                    </div>
+                    <div class="form-row" style="margin-bottom:1rem;">
+                        <div class="form-group" style="margin:0;"><label>Type</label>
+                            <select class="form-control r-typ" onchange="app.toggleRes(${id}, this.value)">
+                                <option value="video" ${t==='video'?'selected':''}>YouTube Video</option>
+                                <option value="pdf" ${t==='pdf'?'selected':''}>PDF Doc</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;"><label>Title</label>
+                            <input type="text" class="form-control r-tit" value="${ui.escaped(tit)}" placeholder="e.g. Chapter 1 Intro">
+                        </div>
+                    </div>
+                    
+                    <div id="ru-${id}" style="display: ${t==='video'?'block':'none'}">
+                        <label>Video URL</label>
+                        <input type="text" class="form-control r-url-vid" value="${t==='video'?ui.escaped(u):''}" placeholder="https://youtube.com/...">
+                    </div>
+                    
+                    <div id="rp-${id}" style="display: ${t==='pdf'?'block':'none'}">
+                        <label>PDF URL or Upload</label>
+                        <input type="text" class="form-control r-url-pdf" value="${t==='pdf'?ui.escaped(u):''}" placeholder="https://drive.google.com/..." style="margin-bottom:8px;">
+                        <div class="file-upload-wrap">
+                            <input type="file" class="r-file" accept="application/pdf">
+                            <span class="file-status" style="color:var(--accent-success)">${t==='pdf'&&u ? '✓ Set' : ''}</span>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('resources-container').appendChild(d);
+            },
+
+            toggleRes(id, type) {
+                document.getElementById(`ru-${id}`).style.display = type === 'video' ? 'block' : 'none';
+                document.getElementById(`rp-${id}`).style.display = type === 'pdf' ? 'block' : 'none';
+            },
+
+            async saveSet() {
+                const title = document.getElementById('set-title').value.trim();
+                if (!title) return ui.toast("Set Title required", true);
+
+                const btn = document.getElementById('btn-save-set');
+                const origTxt = btn.textContent;
+                btn.textContent = "Processing..."; btn.disabled = true;
+
+                try {
+                    const blocks = document.querySelectorAll('.r-block');
+                    const resArr = [];
+
+                    for (let i = 0; i < blocks.length; i++) {
+                        const b = blocks[i];
+                        const rType = b.querySelector('.r-typ').value;
+                        const rTit = b.querySelector('.r-tit').value.trim() || (rType==='video'?'Video':'PDF');
+                        let rUrl = "";
+
+                        if (rType === 'video') {
+                            rUrl = b.querySelector('.r-url-vid').value.trim();
+                            if(!rUrl) continue;
+                        } else {
+                            const fileInp = b.querySelector('.r-file');
+                            const urlInp = b.querySelector('.r-url-pdf').value.trim();
+                            
+                            if (fileInp.files && fileInp.files.length > 0) {
+                                const file = fileInp.files[0];
+                                const fName = `admin_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`;
+                                
+                                const { error: upErr } = await supabase.storage.from('study_materials').upload(fName, file);
+                                if (upErr) throw new Error(`Upload fail: ${upErr.message}`);
+                                
+                                const { data: pUrl } = supabase.storage.from('study_materials').getPublicUrl(fName);
+                                rUrl = pUrl.publicUrl;
+                            } else if (urlInp) {
+                                rUrl = urlInp;
+                            } else {
+                                continue;
+                            }
+                        }
+
+                        resArr.push({ type: rType, title: rTit, url: rUrl, sort_order: resArr.length });
+                    }
+
+                    const mTest = document.getElementById('set-mock-test').value;
+                    const payload = {
+                        title,
+                        subject: document.getElementById('set-subject').value,
+                        class_name: document.getElementById('set-class').value,
+                        description: document.getElementById('set-desc').value,
+                        mock_test_id: mTest ? parseInt(mTest) : null,
+                        visible: document.getElementById('set-visible').checked
+                    };
+
+                    let targetSetId = state.editSetId;
+
+                    if (state.editSetId) {
+                        const { error: updErr } = await supabase.from('study_sets').update(payload).eq('id', targetSetId);
+                        if (updErr) throw updErr;
+                        await supabase.from('study_resources').delete().eq('set_id', targetSetId);
+                    } else {
+                        const { data, error: insErr } = await supabase.from('study_sets').insert([payload]).select('id').single();
+                        if (insErr) throw insErr;
+                        targetSetId = data.id; // Correctly grabs generated UUID
+                    }
+
+                    if (resArr.length > 0) {
+                        const inserts = resArr.map(r => ({ ...r, set_id: targetSetId }));
+                        const { error: rErr } = await supabase.from('study_resources').insert(inserts);
+                        if (rErr) throw rErr;
+                    }
+
+                    ui.toast(state.editSetId ? "Study Set Updated!" : "Study Set Created!");
+                    app.cancelSetEdit();
+                    app.loadSets();
+
+                } catch (e) {
+                    ui.toast(e.message, true);
+                } finally {
+                    btn.textContent = origTxt; btn.disabled = false;
+                }
+            },
+
+            // Settings Module
+            async updatePassword() {
+                const curP = document.getElementById('cur-pass').value;
+                const newP = document.getElementById('new-pass').value;
+                if(!curP || !newP) return ui.toast("Fill both password fields", true);
+
+                const { data, error } = await supabase.rpc('change_admin_password', { old_pass: curP, new_pass: newP });
+                
+                if (data === true) {
+                    ui.toast("Password updated successfully");
+                    document.getElementById('cur-pass').value = '';
+                    document.getElementById('new-pass').value = '';
+                } else {
+                    ui.toast(error?.message || "Incorrect current password.", true);
+                }
+            },
+
+            // Helper
+            reindex(className, prefix) {
+                document.querySelectorAll(`.${className}`).forEach((b, i) => {
+                    b.querySelector('.block-top span').textContent = `${prefix}${i + 1}`;
+                });
+            }
+        };
+
+        // Event Listeners Initialization
+        document.querySelectorAll('.sidebar-item').forEach(el => {
+            el.addEventListener('click', (e) => app.navTo(e.currentTarget.getAttribute('data-target')));
         });
-    }
 
-    grid.innerHTML = '';
-    allDatabaseTests.forEach(test => {
-      const stats = statsMap[test.id] || [];
-      const attendees = stats.length;
-      const avg = attendees > 0 ? (stats.reduce((a,b)=>a+b,0) / attendees).toFixed(1) + '%' : '--';
-      const high = attendees > 0 ? Math.max(...stats).toFixed(1) + '%' : '--';
-      const low = attendees > 0 ? Math.min(...stats).toFixed(1) + '%' : '--';
+        document.getElementById('btnLogin').addEventListener('click', async () => {
+            const pwd = document.getElementById('adminPassword').value;
+            if(!pwd) return ui.toast("Enter password", true);
+            
+            const btn = document.getElementById('btnLogin');
+            btn.textContent = "Verifying..."; btn.disabled = true;
 
-      const card = document.createElement('div');
-      card.className = 'manage-card';
-      card.id = `manage-card-${test.id}`; // Assigned ID for instant removal
-      
-      card.innerHTML = `
-        <div class="mc-header">
-          <div><h3 class="mc-title">${test.title}</h3><div style="font-size:0.85rem; color:var(--muted)">${test.subject} • ${test.class_level}</div></div>
-          <span class="mc-badge">ID: ${test.id}</span>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-box"><span>👥 Attendees</span><strong>${attendees}</strong></div>
-          <div class="stat-box"><span>📊 Average</span><strong>${avg}</strong></div>
-          <div class="stat-box"><span>📈 Highest</span><strong style="color:var(--success)">${high}</strong></div>
-          <div class="stat-box"><span>📉 Lowest</span><strong style="color:var(--danger)">${low}</strong></div>
-        </div>
-        <div class="mc-actions">
-          <button class="btn btn-ghost" style="padding: 8px 15px; font-size: 0.8rem;" onclick="triggerEdit(${test.id})">✏️ Edit Test</button>
-          <button class="btn btn-danger" style="padding: 8px 15px; font-size: 0.8rem;" onclick="triggerDelete(${test.id}, '${test.title}')">🗑️ Delete</button>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-  }
+            const { data } = await supabase.rpc('login_admin', { pass_guess: pwd });
+            
+            if (data === true) {
+                state.loggedIn = true;
+                document.getElementById('view-login').classList.remove('active');
+                document.getElementById('view-dashboard').classList.add('active');
+                document.querySelector('.logout-btn').style.display = 'block';
+                app.navTo('panel-manage-tests'); // Default view
+                document.getElementById('adminPassword').value = '';
+            } else {
+                ui.toast("Access Denied.", true);
+            }
+            btn.textContent = "Unlock Dashboard"; btn.disabled = false;
+        });
 
-  // --- DELETE TEST (Optimized for instant UI removal) ---
-  window.triggerDelete = function(id, title) {
-    showConfirmModal("Delete Test", `Are you sure you want to permanently delete "${title}"? All analytics for this test will also be wiped.`, "Delete Permanently", async () => {
-      
-      // 1. Optimistic UI: Fade the card to show action is happening
-      const cardEl = document.getElementById(`manage-card-${id}`);
-      if(cardEl) {
-         cardEl.style.opacity = '0.5';
-         cardEl.style.pointerEvents = 'none';
-      }
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            state.loggedIn = false;
+            document.getElementById('view-dashboard').classList.remove('active');
+            document.getElementById('view-login').classList.add('active');
+            document.querySelector('.logout-btn').style.display = 'none';
+        });
 
-      // 2. Perform DB deletion
-      const { error } = await supabase.from('mock_tests').delete().eq('id', id);
-      
-      // 3. Handle Result
-      if(error) {
-        showToast(error.message, true);
-        if(cardEl) { // Revert UI if it failed
-           cardEl.style.opacity = '1';
-           cardEl.style.pointerEvents = 'auto';
-        }
-      } else { 
-        showToast("Test Deleted Successfully"); 
-        
-        // Remove instantly without fetching database again
-        if(cardEl) cardEl.remove();
-        
-        // Remove from the local memory array
-        allDatabaseTests = allDatabaseTests.filter(t => t.id !== id);
+        // Initialize empty forms
+        app.addQuestion();
+        app.addResource();
 
-        // If no tests are left on the screen, show empty state text
-        if(allDatabaseTests.length === 0) {
-           document.getElementById('manageGrid').innerHTML = '<p style="color: var(--muted); text-align: center;">No tests created yet.</p>';
-        }
-      }
-    });
-  }
-
-  // --- EDIT TEST LOGIC ---
-  window.triggerEdit = function(id) {
-    const test = allDatabaseTests.find(t => t.id === id);
-    if(!test) return;
-
-    editingTestId = test.id;
-    document.getElementById('builderTitle').textContent = "✏️ Editing Test: " + test.title;
-    document.getElementById('btnPublishTest').textContent = "💾 Update Database";
-    document.getElementById('btnPublishTest').style.background = "linear-gradient(120deg, var(--success), #FFF, var(--success))";
-    document.getElementById('btnCancelEdit').style.display = 'block';
-
-    // Populate Fields
-    document.getElementById('testTitle').value = test.title;
-    document.getElementById('testSubject').value = test.subject;
-    document.getElementById('testClass').value = test.class_level;
-    document.getElementById('testDuration').value = test.duration_mins;
-
-    // Populate Questions
-    qContainer.innerHTML = ''; qCount = 0;
-    test.questions.forEach(qData => addQuestionBlock(qData));
-
-    // Switch View visually using the tab button (to get the active highlight)
-    document.querySelectorAll('.sidebar-link')[1].click(); 
-    window.scrollTo({top: 0, behavior: 'smooth'});
-  }
-
-  document.getElementById('btnCancelEdit').addEventListener('click', () => {
-    editingTestId = null;
-    document.getElementById('builderTitle').textContent = "Create a Mock Test";
-    document.getElementById('btnPublishTest').textContent = "🚀 Publish Test to Database";
-    document.getElementById('btnPublishTest').style.background = "";
-    document.getElementById('btnCancelEdit').style.display = 'none';
-    
-    document.getElementById('testTitle').value = '';
-    document.getElementById('testDuration').value = '15';
-    qContainer.innerHTML = ''; qCount = 0; addQuestionBlock();
-    showToast("Edit Cancelled. Switched to New Test Mode.");
-  });
-
-  // --- QUESTION BUILDER (Modified for Pre-filling) ---
-  const qContainer = document.getElementById('questionsContainer');
-  let qCount = 0;
-
-  function addQuestionBlock(qData = null) {
-    qCount++; const id = qCount;
-    const div = document.createElement('div'); div.className = 'q-block'; div.id = `qblock_${id}`;
-    
-    const qText = qData ? qData.question : '';
-    const o0 = qData ? qData.options[0] : ''; const o1 = qData ? qData.options[1] : '';
-    const o2 = qData ? qData.options[2] : ''; const o3 = qData ? qData.options[3] : '';
-    const cIdx = qData ? qData.correctIndex : 0;
-
-    div.innerHTML = `
-      <div class="q-header"><span>Question ${id}</span><button class="btn btn-danger" style="padding: 6px 12px; font-size:0.75rem; width: auto;" onclick="document.getElementById('qblock_${id}').remove(); updateQuestionNumbers();">✕ Remove</button></div>
-      <div class="form-group"><textarea class="form-control q-text" rows="2" placeholder="Enter question text...">${qText}</textarea></div>
-      <div class="opt-row"><input type="radio" name="correct_${id}" value="0" ${cIdx===0?'checked':''}> <input type="text" class="form-control q-opt" value="${o0}" placeholder="Option A"></div>
-      <div class="opt-row"><input type="radio" name="correct_${id}" value="1" ${cIdx===1?'checked':''}> <input type="text" class="form-control q-opt" value="${o1}" placeholder="Option B"></div>
-      <div class="opt-row"><input type="radio" name="correct_${id}" value="2" ${cIdx===2?'checked':''}> <input type="text" class="form-control q-opt" value="${o2}" placeholder="Option C"></div>
-      <div class="opt-row"><input type="radio" name="correct_${id}" value="3" ${cIdx===3?'checked':''}> <input type="text" class="form-control q-opt" value="${o3}" placeholder="Option D"></div>
-    `;
-    qContainer.appendChild(div);
-  }
-
-  window.updateQuestionNumbers = function() {
-    document.querySelectorAll('.q-block').forEach((block, index) => {
-      block.querySelector('.q-header span').textContent = `Question ${index + 1}`;
-    });
-  }
-  document.getElementById('btnAddQuestion').addEventListener('click', () => addQuestionBlock());
-
-  // --- SUBMIT / UPDATE TEST LOGIC ---
-  document.getElementById('btnPublishTest').addEventListener('click', async () => {
-    const title = document.getElementById('testTitle').value.trim();
-    const subject = document.getElementById('testSubject').value;
-    const classLevel = document.getElementById('testClass').value;
-    const duration = parseInt(document.getElementById('testDuration').value);
-    const blocks = document.querySelectorAll('.q-block');
-
-    if(!title || blocks.length === 0) return showToast("Title and at least 1 question required", true);
-
-    const questionsArray = [];
-    let isValid = true;
-
-    blocks.forEach((block) => {
-      const qText = block.querySelector('.q-text').value.trim();
-      const options = Array.from(block.querySelectorAll('.q-opt')).map(inp => inp.value.trim());
-      const radioChecked = block.querySelector('input[type="radio"]:checked');
-      if(!qText || options.some(opt => opt === "")) isValid = false;
-      questionsArray.push({ question: qText, options: options, correctIndex: parseInt(radioChecked.value) });
-    });
-
-    if(!isValid) return showToast("All fields must be filled", true);
-
-    const testData = { title, subject, class_level: classLevel, duration_mins: duration, questions: questionsArray };
-    const btn = document.getElementById('btnPublishTest');
-    btn.textContent = "Saving..."; btn.disabled = true;
-
-    let dbError = null;
-
-    if(editingTestId) {
-       // UPDATE MODE
-       const { error } = await supabase.from('mock_tests').update(testData).eq('id', editingTestId);
-       dbError = error;
-    } else {
-       // INSERT MODE
-       const { error } = await supabase.from('mock_tests').insert([testData]);
-       dbError = error;
-    }
-
-    btn.disabled = false;
-
-    if (dbError) {
-      showToast("Error: " + dbError.message, true);
-      btn.textContent = editingTestId ? "💾 Update Database" : "🚀 Publish Test to Database";
-    } else {
-      showToast(editingTestId ? "✓ Test Updated Successfully!" : "✓ Test Published Successfully!");
-      document.getElementById('btnCancelEdit').click(); // This resets the form automatically
-      loadManageAnalytics(); // Refresh analytics grid in background
-    }
-  });
-
-  // Settings tab placeholder to avoid JS errors
-  document.getElementById('btnUpdatePassword').addEventListener('click', async () => {
-    const currentPass = document.getElementById('currentPassword').value;
-    const newPass = document.getElementById('newPassword').value;
-    const { data: success } = await supabase.rpc('change_admin_password', { old_pass: currentPass, new_pass: newPass });
-    if(success) showToast("Password updated!"); else showToast("Incorrect password.", true);
-  });
-
-  // Init
-  checkLoginStatus();
-  if(!editingTestId) addQuestionBlock();
-</script>
+    </script>
 </body>
 </html>

@@ -240,8 +240,9 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
 
 <nav>
   <div class="nav-inner">
-    <div class="logo"><a href="index.html">Azahar Mollah</a></div>
+    <div class="logo"><a href="mock.html">Azahar Mollah</a></div>
     <div class="nav-links">
+	<a href="study.html">Study Materials</a>
       <a id="navHomeBtn">← Exit Test Portal</a>
     </div>
   </div>
@@ -344,7 +345,7 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
   const supabaseUrl = 'https://svxszmutdbdjhrirpajr.supabase.co'; 
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eHN6bXV0ZGJkamhyaXJwYWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDAzMjcsImV4cCI6MjA4OTIxNjMyN30.0onmcNCCREB1T-xktpGPGj8Ei1iDnjCRoc4RoJ8yOTs';
+  const supabaseAnonKey = 'YOUR_ANON_KEY_HERE'; // Keep your actual key here
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   // App State
@@ -405,6 +406,7 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     if (cachedData) {
       allTests = JSON.parse(cachedData);
       renderTests(allTests);
+      checkUrlForAutoStart(); // Check URL if loaded from cache
     }
 
     try {
@@ -415,13 +417,33 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
         allTests = data;
         localStorage.setItem(cacheKey, JSON.stringify(allTests));
         renderTests(allTests);
+        if(!cachedData) checkUrlForAutoStart(); // Check URL if loaded fresh
       }
     } catch (error) {
       if (!cachedData) {
+        // Fallback test data
         allTests = [
           { id: 1, title: 'Cell Structure & Physiology', subject: 'Biology', class_level: 'Class XI', duration_mins: 2, questions: [{ question: "Which organelle is the powerhouse?", options: ["Nucleus", "Mitochondria", "Ribosome", "Golgi"], correctIndex: 1 }, { question: "Role of diaphragm?", options: ["Filter dust", "Exchange gases", "Change thoracic volume", "Pump blood"], correctIndex: 2 }] },
         ];
         renderTests(allTests);
+        checkUrlForAutoStart();
+      }
+    }
+  }
+
+  // --- NEW LOGIC: AUTO START TEST IF LINKED FROM STUDY SET ---
+  function checkUrlForAutoStart() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoStartId = urlParams.get('testid');
+    
+    if (autoStartId) {
+      // Find the test that matches the ID from the URL
+      const testToStart = allTests.find(t => t.id == autoStartId);
+      if (testToStart) {
+        // Clear the URL so if the user clicks "Back", it doesn't auto-start again
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // Start the test immediately
+        startTest(testToStart);
       }
     }
   }
@@ -556,10 +578,8 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     let finalScore = 0;
     const reviewHTML = [];
     const letters = ['A','B','C','D','E']; 
-    
     const dateStr = new Date().toLocaleDateString();
     
-    // --- BUILD THE HTML2PDF TEMPLATE WITH THE EXACT SAME NATIVE STYLING ---
     window.latestPrintHtml = `
       <div style="font-family: sans-serif; color: black; padding: 20px; background: white;">
         <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
@@ -590,7 +610,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       const uAnsText = uAns !== null ? `${letters[uAns]}) ${q.options[uAns]}` : "Not Attempted";
       const cAnsText = `${letters[q.correctIndex]}) ${q.options[q.correctIndex]}`;
 
-      // Web View Review Item (UI display)
       reviewHTML.push(`
         <div class="review-item ${isCorrect ? 'correct' : ''}" style="animation-delay: ${0.8 + (index * 0.15)}s">
           <div class="review-q">${index + 1}. ${q.question}</div>
@@ -601,7 +620,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
         </div>
       `);
 
-      // Add Table Row to the PDF HTML String
       window.latestPrintHtml += `
             <tr>
               <td style="border: 1px solid #ddd; padding: 12px; text-align: left; word-break: break-word; overflow-wrap: anywhere;">${index + 1}</td>
@@ -621,12 +639,11 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
         
         <div style="margin-top: 30px; padding: 20px; background: #f4f4f4; border: 1px solid #ddd; text-align: center;">
           <h2 style="margin: 0; color: black;">Final Score: ${finalScore} out of ${currentTest.questions.length}</h2>
-          <h3 style="margin-top: 10px; color: ${percentage >= 50 ? '#008000' : '#d00000'};">Percentage: ${percentage.toFixed(1)}%</h3>
+          <h3 style="margin: 0; margin-top: 10px; color: ${percentage >= 50 ? '#008000' : '#d00000'};">Percentage: ${percentage.toFixed(1)}%</h3>
         </div>
       </div>
     `;
 
-    // Display Web View Scores
     document.getElementById('scoreTotal').textContent = `OUT OF ${currentTest.questions.length}`;
     const scoreDisplay = document.getElementById('scoreDisplay');
     scoreDisplay.textContent = '0';
@@ -647,18 +664,14 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
 
     document.getElementById('reviewArea').innerHTML = `<h3 style="margin-bottom:20px; animation: slideUpFade 0.5s 0.8s forwards; opacity:0;">Review Answers</h3>` + reviewHTML.join('');
 
-    // --- UPDATE STATS UI (Accuracy & Percentile) ---
     document.getElementById('statAccuracy').textContent = `${percentage.toFixed(1)}%`;
     document.getElementById('statPercentile').innerHTML = `<span style="font-size:0.8rem; font-weight:400; color:#FFF;">Calculating...</span>`;
 
-    // --- FETCH PERCENTILE AND PUSH RESULT TO SUPABASE ANALYTICS ---
     (async () => {
       try {
         const { data: history } = await supabase.from('test_results').select('percentage').eq('test_id', currentTest.id);
-        
         let totalTakers = history ? history.length + 1 : 1;
         let belowOrEqual = history ? history.filter(d => d.percentage <= percentage).length + 1 : 1;
-        
         let pct = Math.round((belowOrEqual / totalTakers) * 100);
         
         let suffix = "th";
@@ -684,18 +697,15 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
     switchView('view-result');
   }
 
-  // --- TRIGGER HTML2PDF DOWNLOAD ---
   document.getElementById('btnDownloadPdf').addEventListener('click', () => {
     const btn = document.getElementById('btnDownloadPdf');
     const originalText = btn.innerHTML;
     btn.innerHTML = '⏳ Generating PDF...';
     btn.disabled = true;
 
-    // Create a temporary container for html2pdf
     const printContainer = document.createElement('div');
     printContainer.innerHTML = window.latestPrintHtml;
 
-    // PDF Configuration options
     const opt = {
       margin:       0.5,
       filename:     `${currentTest.title.replace(/\s+/g, '_')}_Result.pdf`,
@@ -704,7 +714,6 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
       jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
 
-    // Execute Download
     html2pdf().set(opt).from(printContainer).save().then(() => {
       btn.innerHTML = originalText;
       btn.disabled = false;
@@ -719,6 +728,9 @@ input[type="radio"]:checked + .option-label .opt-letter { background: var(--acce
   });
 
   document.getElementById('btnReturnDir').addEventListener('click', () => { 
+    // Remove query parameters from URL so it goes back to the main directory cleanly
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
     document.getElementById('testGrid').innerHTML = `
       <div class="skeleton-wrapper">
         <div class="skeleton"><div class="skel-header"><div class="skel-badge"></div><div class="skel-icon"></div></div><div class="skel-title"></div><div class="skel-meta"></div><div class="skel-btn"></div></div>

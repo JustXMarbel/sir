@@ -1393,15 +1393,17 @@ footer{
 <nav>
   <div class="nav-inner">
     <div class="logo">Azahar Mollah</div>
-    <div class="nav-links" id="navLinks">
-      <a href="#hero">Home</a>
-	      <a href="#mock-test">Mock Tests</a>
-      <a href="#subjects">Subjects</a>
-      <a href="#why-us">Why Us</a>
-      <a href="#smartboard">Session</a>
-      <a href="#students">Students</a>
-      <a href="#contact">Enroll</a>
-    </div>
+   <div class="nav-links" id="navLinks">
+  <a href="#hero">Home</a>
+  <a href="#mock-test">Mock Tests</a>
+  <!-- ADD THIS LINE BELOW -->
+  <a href="#resources">Resources</a> 
+  <a href="#subjects">Subjects</a>
+  <a href="#why-us">Why Us</a>
+  <a href="#smartboard">Session</a>
+  <a href="#students">Students</a>
+  <a href="#contact">Enroll</a>
+</div>
     <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
@@ -1521,8 +1523,62 @@ Also offering special NEET-oriented Biology classes for Classes XI-Xll to ensure
     </div>
   </div>
 </section>
+<!-- RESOURCES & DEMO SECTION -->
+<section class="resources-section" id="resources" style="background: linear-gradient(180deg, #061426, #0B2038); border-top: 1px solid rgba(0, 229, 255, 0.2);">
+  <div class="section-head reveal">
+    <div class="tag">Free Learning</div>
+    <h2>Free Study Material & Demos 📖</h2>
+    <p>Access premium PDF notes and watch high-quality demo lectures from our recent classes.</p>
+  </div>
 
-<!-- WHY JOIN US SECTION -->
+  <!-- Dynamic container for Supabase data -->
+  <div id="dynamic-sets-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1100px; margin: 0 auto;">
+    <p style="color:var(--muted); text-align:center; grid-column: 1 / -1;">Loading latest study sets...</p>
+  </div>
+
+  <div class="reveal" style="text-align: center; margin-top: 50px;">
+    <a href="study.html" class="btn ghost" style="border-color: var(--accent); color: var(--accent);">Browse All Resources →</a>
+  </div>
+</section>
+
+<style>
+  /* Clean Card Styles */
+  .res-preview-card {
+    background: var(--bg-panel);
+    border: 2px solid rgba(0, 229, 255, 0.2);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: left;
+    transition: 0.4s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .res-preview-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent);
+    box-shadow: var(--neon-glow);
+  }
+  .res-preview-card .meta {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 800;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .res-preview-card h3 {
+    color: #FFFFFF;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+    flex-grow: 1;
+  }
+  .res-preview-card .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+</style><!-- WHY JOIN US SECTION -->
 <!-- MOCK TEST SECTION -->
 <section class="mock-test-section" id="mock-test">
   <div class="section-head reveal">
@@ -1723,16 +1779,17 @@ Also offering special NEET-oriented Biology classes for Classes XI-Xll to ensure
       <form id="contactForm">
         <input type="text" id="studentName" placeholder="Student Name" required>
         <input type="tel" id="studentPhone" placeholder="Phone / WhatsApp" required>
-        <select id="studentClass" required>
-          <option value="" disabled selected>Class</option>
-          <option value="Class VI">Class VI</option>
-          <option value="Class VII">Class VII</option>
-          <option value="Class VIII">Class VIII</option>
-          <option value="Class IX">Class IX</option>
-          <option value="Class X">Class X</option>
-          <option value="Class XI">Class XI</option>
-          <option value="Class XII">Class XII</option>
-        </select>
+       <select id="studentClass" required>
+  <option value="" disabled selected>Class</option>
+  <option value="Class VI">Class VI</option>
+  <option value="Class VII">Class VII</option>
+  <option value="Class VIII">Class VIII</option>
+  <option value="Class IX">Class IX</option>
+  <option value="Class X">Class X</option>
+  <option value="Class XI">Class XI</option>
+  <option value="Class XII">Class XII</option>
+  <option value="NEET Preparation">NEET Preparation</option>
+</select>
         <select id="studentSubject" required>
           <option value="" disabled selected>Subject focus</option>
           <option value="Biology">Biology</option>
@@ -1870,6 +1927,62 @@ form.addEventListener('submit', e => {
   toast.classList.add('show');
   setTimeout(()=>toast.classList.remove('show'),3500);
 });
+</script>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+  const supabaseUrl = 'https://svxszmutdbdjhrirpajr.supabase.co'; 
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eHN6bXV0ZGJkamhyaXJwYWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDAzMjcsImV4cCI6MjA4OTIxNjMyN30.0onmcNCCREB1T-xktpGPGj8Ei1iDnjCRoc4RoJ8yOTs';
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  async function fetchLatestSets() {
+    const container = document.getElementById('dynamic-sets-container');
+    
+    try {
+      // Super lightweight fetch: Just get the basic details of the 3 newest visible sets
+      const { data: sets, error } = await supabase
+        .from('study_sets')
+        .select('id, title, class_name, subject')
+        .eq('visible', true)
+        .order('id', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+
+      if (!sets || sets.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted); text-align:center; grid-column: 1 / -1;">Study materials will be uploaded soon.</p>';
+        return;
+      }
+
+      container.innerHTML = ''; 
+
+      sets.forEach((set, index) => {
+        const card = document.createElement('div');
+        card.className = 'res-preview-card reveal';
+        card.style.animationDelay = `${index * 0.1}s`;
+        
+        card.innerHTML = `
+          <div class="meta">${set.class_name} • ${set.subject}</div>
+          <h3>${set.title}</h3>
+          <!-- Direct Redirect to the specific Set ID -->
+          <a href="study.html?id=${set.id}" class="btn primary">Open Set →</a>
+        `;
+        
+        container.appendChild(card);
+      });
+
+      // Trigger scroll animations for the newly added cards
+      if (typeof revealObserver !== 'undefined') {
+        document.querySelectorAll('#dynamic-sets-container .reveal').forEach(el => revealObserver.observe(el));
+      }
+
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<p style="color:var(--danger); text-align:center; grid-column: 1 / -1;">Error loading sets.</p>';
+    }
+  }
+
+  fetchLatestSets();
 </script>
 </body>
 </html>
