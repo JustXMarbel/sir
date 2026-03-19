@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Materials - Science and Biology by Azahar Sir</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{
+  --bg-dark: #008DD5; 
+  --bg-panel: #0B2038; 
+  --bg-soft: #061426; 
+  --bg-muted: #1A3A5C; 
+  --accent: #00E5FF; 
+  --accent-2: #FFFFFF; 
+  --text: #FFFFFF; 
+  --muted: #E0F7FA; 
+  --neon-glow: 0 0 15px rgba(0, 229, 255, 0.4), 0 0 30px rgba(0, 229, 255, 0.2);
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{
+  font-family:"Poppins","Segoe UI",system-ui,-apple-system,sans-serif;
+  background: linear-gradient(135deg, #008DD5, #0B2038, #0099CC, #061426);
+  background-size: 400% 400%;
+  animation: bgShift 15s ease infinite;
+  color: var(--text);
+  line-height: 1.6;
+  font-weight: 600; 
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+}
+
+body::before {
+  content: ""; position: fixed; inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 35px 35px;
+  z-index: -2; pointer-events: none;
+}
+@keyframes bgShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+a{ color:inherit; text-decoration:none; }
+
+/* NAVBAR */
+nav{
+  position:sticky; top:0; z-index:20;
+  background:rgba(11, 32, 56, 0.9); 
+  border-bottom:1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); backdrop-filter:blur(12px);
+}
+.nav-inner{ padding:16px 7vw; display:flex; align-items:center; justify-content:space-between; }
+.logo{ font-weight:800; font-size: 1.2rem; letter-spacing:0.08em; text-shadow: 0 0 10px rgba(255, 255, 255, 0.4); }
+.nav-links{ display:flex; gap:24px; }
+.nav-links a{ font-size:0.9rem; font-weight: 700; color:var(--muted); position:relative; transition: color 0.3s; }
+.nav-links a::after{
+  content:""; position:absolute; left:0; bottom:-6px; width:0; height:2px;
+  background:var(--accent); box-shadow: 0 0 8px var(--accent); transition:width 0.3s;
+}
+.nav-links a:hover{ color:var(--text); text-shadow: 0 0 10px rgba(0, 229, 255, 0.6); }
+.nav-links a:hover::after{ width:100%; }
+
+/* FLOATING ANIMATION */
+.floating-molecules{ position:fixed; inset:0; pointer-events:none; z-index:0; }
+.floating-molecules span{
+  position:absolute; width:10px; height:10px; border-radius:50%;
+  background:rgba(0, 229, 255, 0.5); box-shadow: 0 0 15px rgba(0, 229, 255, 0.9);
+  animation:floatUp var(--duration) linear infinite; filter:blur(0.5px);
+}
+@keyframes floatUp{ 0%{transform:translateY(0) scale(0.8);opacity:0;} 10%{opacity:1;} 50%{transform:translateY(-60vh) scale(1.2);} 90%{opacity:1;} 100%{transform:translateY(-120vh) scale(0.8);opacity:0;} }
+
+/* HEADER */
+header{ padding:80px 7vw 40px; text-align: center; position:relative; z-index: 1; }
+header h1{ font-size:clamp(2rem,5vw,3.2rem); text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); margin-bottom: 10px; }
+header p{ color: var(--muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+/* FILTERS */
+.filter-section { padding: 30px 7vw; position: relative; z-index: 10; display: flex; justify-content: center; }
+.filter-panel {
+  background: linear-gradient(145deg, #061426, #030A14);
+  border: 2px solid rgba(0, 229, 255, 0.3); padding: 25px 35px; border-radius: 20px;
+  display: flex; gap: 20px; flex-wrap: wrap; align-items: center; width: 100%; max-width: 900px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(0, 229, 255, 0.05);
+}
+.filter-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+.filter-group label { font-size: 0.85rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+select {
+  background: var(--bg-soft); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 12px;
+  padding: 14px 16px; color: #FFFFFF; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s;
+  font-family: inherit; appearance: none;
+}
+select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.25); background: #13355C; }
+select option { background: var(--bg-panel); }
+
+.btn.primary {
+  padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 1rem; border: none; cursor: pointer;
+  background: linear-gradient(120deg, var(--accent), #FFFFFF, var(--accent)); background-size: 200% auto;
+  color: #030A14; box-shadow: 0 10px 25px rgba(0, 229, 255, 0.4); animation: buttonShine 3s linear infinite;
+  transition: transform 0.3s; height: 52px; margin-top: 25px; font-family: inherit;
+}
+.btn.primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 35px rgba(0, 229, 255, 0.6); }
+@keyframes buttonShine { to { background-position: 200% center; } }
+
+/* MATERIALS GRID */
+.materials-container { padding: 40px 7vw 100px; position: relative; z-index: 1; min-height: 400px; }
+.section-title { text-align: center; margin-bottom: 40px; font-size: 2rem; display: none; }
+.materials-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+
+/* SET CARD */
+.set-card {
+  background: var(--bg-panel); border: 2px solid rgba(0, 229, 255, 0.2); border-radius: 20px;
+  padding: 25px; position: relative; overflow: hidden; transition: all 0.4s ease;
+  display: flex; flex-direction: column; cursor: pointer;
+}
+.set-card:hover {
+  transform: translateY(-8px); box-shadow: var(--neon-glow), 0 20px 40px rgba(0,0,0,0.6);
+  border-color: var(--accent); background: linear-gradient(145deg, #0B2038, #061426);
+}
+.set-card h3 { font-size: 1.4rem; margin-bottom: 10px; line-height: 1.3; }
+.set-card p.desc { color: var(--muted); font-size: 0.95rem; margin-bottom: 20px; flex-grow: 1; }
+.set-stats { font-size: 0.85rem; color: var(--accent); font-weight: 800; display: flex; gap: 15px; margin-top: 10px; }
+
+.material-badges { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+.badge { padding: 6px 14px; border-radius: 99px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.badge.class { background: rgba(0, 229, 255, 0.15); color: var(--accent); border: 1px solid rgba(0, 229, 255, 0.3); }
+.badge.subject { background: rgba(255, 209, 102, 0.15); color: #FFD166; border: 1px solid rgba(255, 209, 102, 0.3); }
+
+.empty-state {
+  grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--muted); font-size: 1.1rem;
+  background: rgba(11, 32, 56, 0.5); border: 1px dashed rgba(0, 229, 255, 0.3); border-radius: 20px;
+}
+
+/* ========================================= */
+/* SKELETON LOADER UI                       */
+/* ========================================= */
+.skeleton-card {
+  background: var(--bg-panel); border: 2px solid rgba(0, 229, 255, 0.1); border-radius: 20px;
+  padding: 25px; animation: pulseCard 2s infinite;
+  height: 280px; position: relative; overflow: hidden;
+}
+@keyframes pulseCard {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+.sk-badge {
+  width: 80px; height: 24px; border-radius: 99px; background: #15304F;
+  animation: skPulse 1.5s infinite ease-in-out both; margin-bottom: 15px; margin-right: 10px;
+}
+.sk-badge:nth-child(2) { animation-delay: 0.2s; }
+
+@keyframes skPulse {
+  0% { background: #15304F; }
+  50% { background: #2A507F; }
+  100% { background: #15304F; }
+}
+
+.sk-title {
+  width: 80%; height: 28px; background: #15304F; border-radius: 6px;
+  margin-bottom: 15px; animation: skPulse 1.5s infinite ease-in-out 0.3s both;
+}
+.sk-desc {
+  width: 100%; height: 14px; background: #15304F; border-radius: 4px;
+  margin-bottom: 8px; animation: skPulse 1.5s infinite ease-in-out 0.4s both;
+}
+.sk-desc-short {
+  width: 70%; height: 14px; background: #15304F; border-radius: 4px;
+  margin-bottom: 20px; animation: skPulse 1.5s infinite ease-in-out 0.5s both;
+}
+.sk-stats { display: flex; gap: 15px; margin-top: auto; }
+.sk-stat-pill {
+  width: 60px; height: 16px; background: #15304F; border-radius: 4px;
+  animation: skPulse 1.5s infinite ease-in-out 0.1s both;
+}
+
+
+/* ========================================= */
+/* SET DETAILS MODAL (The Blueprint UI)      */
+/* ========================================= */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(3, 10, 20, 0.85); backdrop-filter: blur(8px);
+  z-index: 100; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+.set-modal-container {
+  background: #030A14; border: 2px solid var(--accent); border-radius: 24px;
+  width: 90%; max-width: 1100px; height: 85vh; display: flex; flex-direction: row;
+  box-shadow: var(--neon-glow), 0 30px 60px rgba(0,0,0,0.9);
+  transform: translateY(20px) scale(0.95); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative; overflow: hidden;
+}
+.modal-overlay.active .set-modal-container { transform: translateY(0) scale(1); }
+
+.close-modal-btn {
+  position: absolute; top: 15px; right: 20px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,229,255,0.3);
+  color: white; font-size: 1.5rem; width: 40px; height: 40px; border-radius: 50%;
+  cursor: pointer; z-index: 10; transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+}
+.close-modal-btn:hover { background: #FF5757; color: white; border-color: #FF5757; box-shadow: 0 0 15px rgba(255,87,87,0.8); transform: rotate(90deg); }
+
+.set-info-panel {
+  flex: 1; background: linear-gradient(180deg, #061426, #0B2038);
+  padding: 50px 40px; display: flex; flex-direction: column;
+  border-right: 2px solid rgba(0, 229, 255, 0.2); position: relative;
+}
+.set-info-panel::before {
+  content:""; position:absolute; top: -50px; left: -50px; width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.15) 0%, transparent 70%); pointer-events:none;
+}
+.set-info-panel h2 { font-size: 2.2rem; margin-top: 10px; margin-bottom: 25px; line-height: 1.2; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
+.about-label { font-size: 1.1rem; color: var(--accent); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px dashed rgba(0,229,255,0.3); padding-bottom: 5px; display: inline-block;}
+.set-info-panel p { color: var(--muted); font-size: 1.05rem; line-height: 1.8; }
+
+.set-resources-panel {
+  flex: 1.2; background: #0B2038; padding: 40px 30px;
+  display: flex; flex-direction: column;
+}
+.resources-header { font-size: 1.4rem; color: #FFFFFF; margin-bottom: 20px; font-weight: 800; }
+.scrollable-list {
+  flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 10px;
+}
+.scrollable-list::-webkit-scrollbar { width: 8px; }
+.scrollable-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 10px; }
+.scrollable-list::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.4); border-radius: 10px; }
+.scrollable-list::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+.resource-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px; border-radius: 16px; background: rgba(6, 20, 38, 0.8);
+  border: 1px solid rgba(0, 229, 255, 0.15); transition: all 0.3s ease; cursor: pointer;
+}
+.resource-item:hover {
+  background: rgba(0, 229, 255, 0.1); border-color: var(--accent);
+  box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2); transform: translateX(-5px);
+}
+.resource-details { display: flex; align-items: center; gap: 15px; }
+.res-icon { 
+  width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; 
+}
+.res-icon.pdf { background: rgba(0, 229, 255, 0.15); color: var(--accent); border: 1px solid rgba(0, 229, 255, 0.4); }
+.res-icon.video { background: rgba(255, 87, 87, 0.15); color: #FF5757; border: 1px solid rgba(255, 87, 87, 0.4); }
+.res-text h4 { font-size: 1.1rem; color: #FFFFFF; margin-bottom: 2px; }
+.res-text span { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.open-btn {
+  padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; border: none; cursor: pointer;
+  background: var(--text); color: #030A14; transition: all 0.3s; pointer-events: none;
+}
+.resource-item:hover .open-btn { background: var(--accent); box-shadow: 0 0 10px rgba(0,229,255,0.6); }
+
+/* ========================================= */
+/* VIEWER MODAL (For PDF / YT embedded)      */
+/* ========================================= */
+.viewer-modal { z-index: 110; }
+.viewer-content {
+  background: var(--bg-panel); border: 2px solid var(--accent); border-radius: 16px;
+  width: 95%; max-width: 1200px; height: 90vh; display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: var(--neon-glow), 0 30px 60px rgba(0,0,0,0.9);
+}
+.viewer-header {
+  padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2); background: #030A14;
+}
+.viewer-body { flex-grow: 1; background: #000; position: relative; }
+.viewer-body iframe { width: 100%; height: 100%; border: none; }
+
+@media(max-width: 900px) {
+  .set-modal-container { flex-direction: column; height: 90vh; overflow-y: auto; }
+  .set-info-panel { border-right: none; border-bottom: 2px solid rgba(0, 229, 255, 0.2); padding: 30px; flex: none; }
+  .set-resources-panel { padding: 30px; flex: none; min-height: 400px; }
+  .scrollable-list { overflow-y: visible; }
+  .filter-panel { flex-direction: column; padding: 20px; }
+  .filter-group { width: 100%; }
+  .btn.primary { width: 100%; margin-top: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="floating-molecules" id="molecules"></div>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo"><a href="study.html">Azahar Mollah</a></div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="mock.html">Tests</a>
+      <a href="index.html#contact">Enroll</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <h1>Study <span style="color:var(--accent);">Sets</span></h1>
+  <p>Select your class and subject to access comprehensive sets containing PDF notes and recorded masterclasses.</p>
+</header>
+
+<section class="filter-section">
+  <div class="filter-panel">
+    <div class="filter-group">
+      <label for="classFilter">Select Class</label>
+      <select id="classFilter">
+        <option value="all">All Classes</option>
+        <option value="Class 9">Class 9</option>
+        <option value="Class 10">Class 10</option>
+        <option value="Class 11">Class 11</option>
+        <option value="Class 12">Class 12</option>
+        <option value="NEET Preparation">NEET Preparation</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label for="subjectFilter">Select Subject</label>
+      <select id="subjectFilter">
+        <option value="all">All Subjects</option>
+        <option value="Physics">Physics</option>
+        <option value="Chemistry">Chemistry</option>
+        <option value="Biology">Biology</option>
+      </select>
+    </div>
+
+    <button id="searchBtn" class="btn primary">Fetch Sets</button>
+  </div>
+</section>
+
+<section class="materials-container">
+  <h2 class="section-title" id="resultsTitle">Available Study Sets</h2>
+  <div class="materials-grid" id="materialsGrid">
+    <div class="empty-state">
+      Select your class and subject above, then click <strong>"Fetch Sets"</strong>.
+    </div>
+  </div>
+</section>
+
+<!-- 1. SET DETAILS MODAL -->
+<div class="modal-overlay" id="setModal">
+  <div class="set-modal-container">
+    <button class="close-modal-btn" id="closeSetModal">&times;</button>
+    
+    <!-- Left Column: Info -->
+    <div class="set-info-panel">
+      <div class="material-badges" id="setModalBadges"></div>
+      <h2 id="setModalTitle">Title of the Set</h2>
+      <span class="about-label">About Set</span>
+      <p id="setModalDesc">Description goes here...</p>
+    </div>
+
+    <!-- Right Column: Resources List -->
+    <div class="set-resources-panel">
+      <h3 class="resources-header">Included Resources</h3>
+      <div class="scrollable-list" id="setModalResources"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. VIEWER MODAL -->
+<div class="modal-overlay viewer-modal" id="viewerModal">
+  <div class="viewer-content">
+    <div class="viewer-header">
+      <h3 style="color:var(--accent); font-size:1.1rem;" id="viewerTitle">Resource Viewer</h3>
+      <button class="close-modal-btn" style="position:static; border:none; background:none;" id="closeViewerModal">&times;</button>
+    </div>
+    <div class="viewer-body" id="viewerBody"></div>
+  </div>
+</div>
+
+<script>
+// --- BACKGROUND ANIMATION ---
+const molecules = document.getElementById('molecules');
+for(let i=0;i<25;i++){
+  const bubble=document.createElement('span');
+  const duration=5+Math.random()*8;
+  bubble.style.left=Math.random()*100+'%';
+  bubble.style.bottom='-20vh';
+  bubble.style.width=bubble.style.height=(5+Math.random()*15)+'px';
+  bubble.style.setProperty('--duration',duration+'s');
+  bubble.style.animationDelay=Math.random()*5+'s';
+  molecules.appendChild(bubble);
+}
+
+// ==========================================
+// SUPABASE CONFIGURATION 
+// ==========================================
+const supabaseUrl = 'https://svxszmutdbdjhrirpajr.supabase.co'; 
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eHN6bXV0ZGJkamhyaXJwYWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDAzMjcsImV4cCI6MjA4OTIxNjMyN30.0onmcNCCREB1T-xktpGPGj8Ei1iDnjCRoc4RoJ8yOTs';
+
+const { createClient } = supabase;
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+
+// ==========================================
+// DOM ELEMENTS & LOGIC
+// ==========================================
+const searchBtn = document.getElementById('searchBtn');
+const materialsGrid = document.getElementById('materialsGrid');
+const resultsTitle = document.getElementById('resultsTitle');
+
+const setModal = document.getElementById('setModal');
+const closeSetModal = document.getElementById('closeSetModal');
+const viewerModal = document.getElementById('viewerModal');
+const closeViewerModal = document.getElementById('closeViewerModal');
+
+// Fetch Logic
+searchBtn.addEventListener('click', async () => {
+  const selectedClass = document.getElementById('classFilter').value;
+  const selectedSubject = document.getElementById('subjectFilter').value;
+
+  resultsTitle.style.display = 'block';
+  
+  // Show Skeleton Loader (3 fake cards)
+  let skeletonsHTML = '';
+  for(let i=0; i<3; i++) {
+    skeletonsHTML += `
+    <div class="skeleton-card">
+      <div class="material-badges" style="margin-bottom:15px;">
+        <div class="sk-badge"></div>
+        <div class="sk-badge"></div>
+      </div>
+      <div class="sk-title"></div>
+      <div class="sk-desc"></div>
+      <div class="sk-desc"></div>
+      <div class="sk-desc-short"></div>
+      <div class="sk-stats">
+        <div class="sk-stat-pill"></div>
+        <div class="sk-stat-pill"></div>
+      </div>
+    </div>`;
+  }
+  materialsGrid.innerHTML = skeletonsHTML;
+
+  try {
+    let query = supabaseClient
+      .from('study_sets')
+      .select(`
+        *,
+        study_resources (*)
+      `);
+    
+    if (selectedClass !== 'all') {
+      query = query.eq('class_name', selectedClass);
+    }
+    if (selectedSubject !== 'all') {
+      query = query.eq('subject', selectedSubject);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      throw error;
+    }
+
+    renderSets(data || []);
+
+  } catch (err) {
+    console.error('Fetch error:', err);
+    materialsGrid.innerHTML = `<div class="empty-state" style="color:#FF5757;">
+      Failed to fetch sets. Error: ${err.message}<br>
+      <small>Check console for details or verify Supabase tables exist.</small>
+    </div>`;
+  }
+});
+
+// Render Grid
+function renderSets(sets) {
+  if (!sets || sets.length === 0) {
+    materialsGrid.innerHTML = `<div class="empty-state">No sets found. Try another filter or check data in Supabase.</div>`;
+    return;
+  }
+  materialsGrid.innerHTML = '';
+  
+  sets.forEach(set => {
+    const card = document.createElement('div');
+    card.className = 'set-card';
+    
+    // Safety check for study_resources (in case foreign key returns null)
+    const resources = set.study_resources || [];
+    const pdfCount = resources.filter(r => r.type === 'pdf').length;
+    const vidCount = resources.filter(r => r.type === 'video').length;
+
+    card.innerHTML = `
+      <div class="material-badges">
+        <span class="badge class">${set.class_name}</span>
+        <span class="badge subject">${set.subject}</span>
+      </div>
+      <h3>${set.title}</h3>
+      <p class="desc">${(set.description || '').substring(0, 80)}...</p>
+      <div class="set-stats">
+        <span>📄 ${pdfCount} PDFs</span>
+        <span>▶️ ${vidCount} Videos</span>
+      </div>
+    `;
+    
+    card.addEventListener('click', () => openSetModal(set));
+    materialsGrid.appendChild(card);
+  });
+}
+
+// Open Set Modal
+function openSetModal(set) {
+  document.getElementById('setModalBadges').innerHTML = `
+    <span class="badge class">${set.class_name}</span>
+    <span class="badge subject">${set.subject}</span>
+  `;
+  document.getElementById('setModalTitle').textContent = set.title;
+  document.getElementById('setModalDesc').textContent = set.description || 'No description provided.';
+
+  const listContainer = document.getElementById('setModalResources');
+  listContainer.innerHTML = '';
+
+  const resources = set.study_resources || [];
+  
+  if (resources.length > 0) {
+    // Sort resources if you have a sort_order column
+    resources.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+    resources.forEach(res => {
+      const item = document.createElement('div');
+      item.className = 'resource-item';
+      
+      const isVideo = res.type === 'video';
+      const iconClass = isVideo ? 'res-icon video' : 'res-icon pdf';
+      const iconSymbol = isVideo ? '▶️' : '📄';
+      const typeLabel = isVideo ? 'Video Lecture' : 'PDF Document';
+
+      item.innerHTML = `
+        <div class="resource-details">
+          <div class="${iconClass}">${iconSymbol}</div>
+          <div class="res-text">
+            <h4>${res.title}</h4>
+            <span>${typeLabel}</span>
+          </div>
+        </div>
+        <button class="open-btn">Open</button>
+      `;
+
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openViewer(res.type, res.url, res.title);
+      });
+      listContainer.appendChild(item);
+    });
+  } else {
+    listContainer.innerHTML = `<p style="color:var(--muted); text-align:center; padding:20px;">No resources uploaded yet.</p>`;
+  }
+
+  setModal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+// Close Set Modal
+closeSetModal.addEventListener('click', () => {
+  setModal.classList.remove('active');
+  document.body.style.overflow = 'auto';
+});
+
+// =======================================================
+// THE BULLETPROOF VIEWER LOGIC (Fixing Embed Issues)
+// =======================================================
+
+// Helper function to extract YouTube ID from ANY format
+function getYouTubeID(url) {
+    if (!url) return null;
+    // If the user just pasted the 11 character ID directly:
+    if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+    
+    // Regex handles: youtube.com/watch?v=, youtu.be/, youtube.com/embed/, youtube.com/shorts/
+    const regExp = /(?:youtube\.com\/(?:[^\/\s]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regExp);
+    
+    return (match && match[1] && match[1].length === 11) ? match[1] : null;
+}
+
+function openViewer(type, source, title) {
+    document.getElementById('viewerTitle').textContent = title;
+    const viewerBody = document.getElementById('viewerBody');
+    viewerBody.innerHTML = ''; // Clear previous content
+  
+    if (type === 'pdf') {
+      viewerBody.innerHTML = `<iframe src="https://docs.google.com/viewer?url=${encodeURIComponent(source)}&embedded=true" title="${title}" style="width:100%; height:100%; border:none;"></iframe>`;
+    } else if (type === 'video') {
+      const videoId = getYouTubeID(source);
+  
+      if (videoId) {
+        viewerBody.innerHTML = `
+          <iframe 
+            src="https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowfullscreen 
+            title="${title}"
+            style="border:0; width:100%; height:100%;">
+          </iframe>`;
+      } else {
+        viewerBody.innerHTML = `
+          <div style="color:#FF5757; text-align:center; padding:50px 20px; font-weight:bold;">
+            ⚠️ Could not load video.<br><br>
+            <span style="color:#FFFFFF; font-weight:normal; font-size:0.9rem;">
+            The provided URL or ID does not seem to be a valid YouTube video.<br>
+            Attempted URL: ${source}
+            </span>
+          </div>`;
+      }
+    }
+    
+    viewerModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Disable background scroll
+  }
+
+  // Close Viewer Modal
+  closeViewerModal.addEventListener('click', () => {
+    viewerModal.classList.remove('active');
+    // Safely remove the iframe to stop playback and release resources
+    const viewerBody = document.getElementById('viewerBody');
+    if (viewerBody) {
+      viewerBody.innerHTML = ''; 
+    }
+    document.body.style.overflow = 'auto'; // Restore background scroll
+  });
+
+// ... (rest of your existing JS code) ...
+// Close modals when clicking outside
+setModal.addEventListener('click', (e) => { 
+  if(e.target === setModal) closeSetModal.click(); 
+});
+
+viewerModal.addEventListener('click', (e) => { 
+  if(e.target === viewerModal) closeViewerModal.click(); 
+});
+
+// Close modals with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (viewerModal.classList.contains('active')) {
+      closeViewerModal.click();
+    } else if (setModal.classList.contains('active')) {
+      closeSetModal.click();
+    }
+  }
+});
+
+</script>
+</body>
+</html>
